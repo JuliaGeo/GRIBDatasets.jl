@@ -3,8 +3,16 @@ uuid = "82be9cdb-ee19-4151-bdb3-b400788d9abc"
 authors = ["tcarion <tristan.carion@gmail.com> and contributors"]
 version = "0.1.0"
 
+[deps]
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+DiskArrays = "3c3547ce-8d99-4f5e-a174-61eb10b00ae3"
+GRIB = "b16dfd50-4035-11e9-28d4-9dfe17e6779b"
+
 [compat]
 julia = "1"
+GRIB = "0.3.0"
+DiskArrays = "0.3.0"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
