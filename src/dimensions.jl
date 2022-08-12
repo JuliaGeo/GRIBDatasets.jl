@@ -18,7 +18,7 @@ end
 const Dimensions = Tuple{Vararg{<:Dimension}}
 
 Base.keys(dims::Dimensions) = [d.name for d in dims]
-Base.in(name, dims::Dimensions) = name in keys(dims)
+Base.in(name::String, dims::Dimensions) = name in keys(dims)
 Base.getindex(dims::Dimensions, name::String) = first(dims[keys(dims) .== name])
 
 function _geography(index::FileIndex)::Type{<:Geography}
@@ -41,7 +41,6 @@ function _otherdims(index::FileIndex; coord_keys = vcat(keys(COORD_ATTRS) |> col
 end
 
 function _detect_vertical(key, headers)
-    println(key)
     if key == "typeOfLevel"
         Dimension{Vertical}("level", length(headers[key]))
     else

@@ -308,3 +308,7 @@ function filter_messages(mindexs::Vector{<:MessageIndex}; query...)
     end
     ms
 end
+
+function get_offsets(mindexs::Vector{<:MessageIndex}, key, val)
+    getoffset.(filter(x -> getheaders(x)[key] == val, mindexs))
+end
