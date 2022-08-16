@@ -16,8 +16,10 @@ function GRIBDataset(index::FileIndex)
     GRIBDataset(index, _alldims(index), dataset_attributes(index)) 
 end
 
+GRIBDataset(filepath::AbstractString) = GRIBDataset(FileIndex(filepath))
+
 Base.keys(ds::Dataset) = getvars(ds)
-Base.getindex(ds::Dataset, key::String) = Variable(ds, key)
+Base.getindex(ds::Dataset, key) = Variable(ds, string(key))
 
 
 function dataset_attributes(index::FileIndex)

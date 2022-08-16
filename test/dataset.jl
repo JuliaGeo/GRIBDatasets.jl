@@ -28,3 +28,12 @@ all_indices = G.messages_indices(layer_index, ldims)
 layer_var = Variable(ds, "t")
 
 layer_var[:,:,3,1,1,1,2]
+
+for test_file in readdir(dir_testfiles, join=true)[2:end]
+    println("Testing $test_file")
+    ds = GRIBDataset(test_file)
+    firstlayer = G.getlayersname(ds) |> first
+    var = ds[firstlayer]
+    I = first(CartesianIndices(var))
+    var[I]
+end
