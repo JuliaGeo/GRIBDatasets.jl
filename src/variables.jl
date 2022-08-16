@@ -20,7 +20,7 @@ julia> dv.offsets[3, 2]
 324720
 ```
 """
-struct DiskValues{T, N, M} <: DA.AbstractDiskArray{T, N}
+struct DiskValues{T, N, M} <: DA.AbstractDiskArray{Union{Missing, T}, N}
     ds::GRIBDataset{T, N}
     layer_index::FileIndex{T}
     offsets::Array{Int, M}
@@ -62,16 +62,22 @@ function DA.readblock!(A::DiskValues, aout, i::AbstractUnitRange...)
 
     rebased_range = Tuple([1:length(range) for range in headers_dim_inds])
 
-    GribFile(grib_path) do file
+    file = GribFile(grib_path)
+    # GribFile(grib_path) do file
         for (I, Ir) in zip(CartesianIndices(headers_dim_inds), CartesianIndices(rebased_range))
             offset = A.offsets[I]
-            message_index = findfirst(all_message_cumsum .> offset) - 1
+            message_index = findfirst(all_message_cumsum .> offset)
+            if isnothing(message_index)
+                error("Couldn't find a message that corresponds to indices $(Tuple(I))")
+            end
+            message_index = message_index - 1
             seek(file, message_index)
             message = Message(file)
             values = message["values"][message_dim_inds...]
             aout[message_dim_inds..., Tuple(Ir)...] = replace(values, missing_value => missing)
         end
-    end
+    # end
+    destroy(file)
 end
 
 """
@@ -112,7 +118,7 @@ function Variable(ds::GRIBDataset, key)
         dims = _alldims(layer_index)
         dv = DiskValues(ds, layer_index, dims)
         attributes = layer_attributes(layer_index)
-        Variable(ds, key, dims, dv, attributes)
+        Variable(ds, string(key), dims, dv, attributes)
     else
         error("key $key not found in dataset")
     end
@@ -125,7 +131,7 @@ function Variable(ds::GRIBDataset, dim::Dimension)
 end
 
 function _dim_values(index::FileIndex, dim::Dimension{<:NonHorizontal})
-    sort(index[dim.name])
+    index[dim.name]
 end
 _dim_values(ds::GRIBDataset, dim::Dimension{<:NonHorizontal}) = _dim_values(ds.index, dim)
 
