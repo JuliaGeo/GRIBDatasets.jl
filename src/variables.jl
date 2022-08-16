@@ -111,7 +111,8 @@ function Variable(ds::GRIBDataset, key)
         layer_index = filter_messages(ds.index, cfVarName = key)
         dims = _alldims(layer_index)
         dv = DiskValues(ds, layer_index, dims)
-        Variable(ds, key, dims, dv, Dict{String, Any}())
+        attributes = layer_attributes(layer_index)
+        Variable(ds, key, dims, dv, attributes)
     else
         error("key $key not found in dataset")
     end
@@ -119,7 +120,8 @@ end
 
 function Variable(ds::GRIBDataset, dim::Dimension) 
     vals = _dim_values(ds, dim)
-    Variable(ds, dim.name, (dim,), vals, Dict{String, Any}())
+    attributes = dim_attributes(dim)
+    Variable(ds, dim.name, (dim,), vals, attributes)
 end
 
 function _dim_values(index::FileIndex, dim::Dimension{<:NonHorizontal})
@@ -135,6 +137,28 @@ function _dim_values(index::FileIndex, dim::Dimension{Geography})
     end
 end
 _dim_values(ds::GRIBDataset, dim::Dimension{Geography}) = _dim_values(ds.index, dim)
+
+function layer_attributes(index::FileIndex)
+    attributes = Dict{String, Any}()
+    data_var_attrs_keys = DATA_ATTRIBUTES_KEYS
+    data_var_attrs_keys = [
+        data_var_attrs_keys;
+        get(GRID_TYPE_MAP, getone(index, "gridType"), [])
+    ]
+
+    for key in data_var_attrs_keys
+        if haskey(index, key) 
+            attributes[key] = join(index[key])
+        end
+    end
+    attributes
+end
+
+function dim_attributes(dim)
+    attributes = Dict{String, Any}()
+    merge!(attributes, copy(get(COORD_ATTRS, dim.name, Dict())))
+    attributes
+end
 
 function Base.show(io::IO, mime::MIME"text/plain", var::Variable)
     println(io, "Variable `$(var.name)` with dims:")

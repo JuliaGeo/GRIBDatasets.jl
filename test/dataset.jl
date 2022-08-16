@@ -1,6 +1,7 @@
 using GRIBDatasets
 using GRIBDatasets: FileIndex, _geography, Variable, NonHorizontal, Dimension, Geography, Dimensions
-using GRIBDatasets: _geodims, _otherdims, OtherDim, _alldims
+using GRIBDatasets: _geodims, _otherdims, OtherDim, _alldims, getone
+using GRIBDatasets: DATA_ATTRIBUTES_KEYS, GRID_TYPE_MAP
 using Pkg
 Pkg.activate("test")
 using BenchmarkTools
