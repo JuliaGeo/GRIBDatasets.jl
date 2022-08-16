@@ -3,41 +3,104 @@ getlayersname(ds::GRIBDataset) = ds.index["cfVarName"]
 
 getvars(ds::GRIBDataset) = vcat(keys(ds.dims), getlayersname(ds))
 
-struct DiskValues{T, N} <: DA.AbstractDiskArray{T, N}
-    offsets::Array{Int, N}
-end
-function DiskValues(layer_index::FileIndex{T}, ldims::Dimensions) where T
-    offsets_array = Array{Int, length(ldims)}
-    for m in layer_index.messages
+"""
+    DiskValues{T, N, M} <: DA.AbstractDiskArray{T, N}
+Object that maps the dimensions lookup to GRIB messages offsets.
+`message_dims` are the dimensions that are found in the GRIB message (namely longitudes and latitudes).
+`other_dims` are the dimensions that have been infered from reading the GRIB file index.
 
+# Example
+```julia-repl
+julia> dv.other_dims
+Dimensions:
+         number = 10
+         level = 2
+
+julia> dv.offsets[3, 2]
+324720
+```
+"""
+struct DiskValues{T, N, M} <: DA.AbstractDiskArray{T, N}
+    ds::GRIBDataset{T, N}
+    layer_index::FileIndex{T}
+    offsets::Array{Int, M}
+    message_dims::Dimensions
+    other_dims::Dimensions
+end
+
+"""
+    DiskValues(layer_index::FileIndex{T}, dims::Dimensions) where T
+Create a `DiskValues` object from matching the GRIB messages headers in `layer_index` to
+the dimensions values in `dims`.
+"""
+function DiskValues(ds::GRIBDataset, layer_index::FileIndex{T}, dims::Dimensions) where T
+    otherdims = Tuple([dim for dim in dims if dim isa Dimension{<:NonHorizontal}])
+    horizdims = Tuple([dim for dim in dims if dim isa Dimension{<:Geography}])
+    N = length(dims)
+    M = length(otherdims)
+    offsets_array = Array{Int, M}(undef, _size_dims(otherdims))
+    all_indices = messages_indices(layer_index, dims)
+
+    for (mind, indices) in zip(layer_index.messages, all_indices)
+        offsets_array[indices...] = getoffset(mind)
     end
-    for dim in ldims
-        if dim isa Dimension{<:OtherDim}
-            push!(offsets_vec, get_offsets.(Ref(layer_index.messages), dim.name, _dim_values(layer_index, dim))...)
+    DiskValues{T, N, M}(ds, layer_index, offsets_array, horizdims, otherdims)
+end
+
+Base.size(dv::DiskValues) = (_size_dims(dv.message_dims)..., _size_dims(dv.other_dims)...)
+
+function DA.readblock!(A::DiskValues, aout, i::AbstractUnitRange...)
+    general_index = A.ds.index
+    grib_path = general_index.grib_path
+
+    message_dim_inds = i[1:length(A.message_dims)]
+    headers_dim_inds = i[length(A.message_dims) + 1: end]
+    
+    all_message_lengths = get_messages_length(A.ds.index)
+    all_message_cumsum = cumsum(all_message_lengths)
+    missing_value = getone(general_index, "missingValue")
+
+    rebased_range = Tuple([1:length(range) for range in headers_dim_inds])
+
+    GribFile(grib_path) do file
+        for (I, Ir) in zip(CartesianIndices(headers_dim_inds), CartesianIndices(rebased_range))
+            offset = A.offsets[I]
+            message_index = findfirst(all_message_cumsum .> offset) - 1
+            seek(file, message_index)
+            message = Message(file)
+            values = message["values"][message_dim_inds...]
+            aout[message_dim_inds..., Tuple(Ir)...] = replace(values, missing_value => missing)
         end
     end
 end
 
-function messages_indices(index::FileIndex, m::MessageIndex, dims::Dimensions)
+"""
+    message_indices(index::FileIndex, mind::MessageIndex, dims::Dimensions)
+Find at which indices in `dims` correspond each GRIB message in `index`.
+"""
+function message_indices(index::FileIndex, mind::MessageIndex, dims::Dimensions)
     indices = Int[]
     for dim in dims
-        if dim isa Dimension{<:OtherDim}
+        if dim isa Dimension{<:NonHorizontal}
             vals = _dim_values(index, dim)
-            ind = findfirst(x -> x == m[dim.name], vals)
+            ind = findfirst(x -> x == mind[dim.name], vals)
             push!(indices, ind)
         end
     end
     indices
 end
 
+messages_indices(index::FileIndex, dims::Dimensions) = [message_indices(index, mind, dims) for mind in index.messages]
+
 struct Variable{T, N, AT <: Union{Array{T, N}, DA.AbstractDiskArray{T, N}}} <: AbstractArray{T, N}
     ds::GRIBDataset
     name::String
-    dims::NTuple{N, <: Dimension}
+    dims::NTuple{N, Dimension}
     values::AT
+    attrib::Dict{String, Any}
 end
 Base.parent(var::Variable) = var.values
-Base.size(var::Variable) = Tuple([d.length for d in var.dims])
+Base.size(var::Variable) = _size_dims(var.dims)
 Base.getindex(var::Variable, I...) = getindex(parent(var), I...)
 
 function Variable(ds::GRIBDataset, key)
@@ -47,7 +110,8 @@ function Variable(ds::GRIBDataset, key)
     elseif key in getlayersname(ds)
         layer_index = filter_messages(ds.index, cfVarName = key)
         dims = _alldims(layer_index)
-
+        dv = DiskValues(ds, layer_index, dims)
+        Variable(ds, key, dims, dv, Dict{String, Any}())
     else
         error("key $key not found in dataset")
     end
@@ -55,13 +119,13 @@ end
 
 function Variable(ds::GRIBDataset, dim::Dimension) 
     vals = _dim_values(ds, dim)
-    Variable(ds, dim.name, (dim,), vals)
+    Variable(ds, dim.name, (dim,), vals, Dict{String, Any}())
 end
 
-function _dim_values(index::FileIndex, dim::Dimension{OtherDim})
+function _dim_values(index::FileIndex, dim::Dimension{<:NonHorizontal})
     sort(index[dim.name])
 end
-_dim_values(ds::GRIBDataset, dim::Dimension{OtherDim}) = _dim_values(ds.index, dim)
+_dim_values(ds::GRIBDataset, dim::Dimension{<:NonHorizontal}) = _dim_values(ds.index, dim)
 
 function _dim_values(index::FileIndex, dim::Dimension{Geography})
     if dim.name in ["longitude", "x"]
@@ -73,6 +137,6 @@ end
 _dim_values(ds::GRIBDataset, dim::Dimension{Geography}) = _dim_values(ds.index, dim)
 
 function Base.show(io::IO, mime::MIME"text/plain", var::Variable)
-    println(io, "Variable with dims:")
+    println(io, "Variable `$(var.name)` with dims:")
     show(io, mime, var.dims)
 end

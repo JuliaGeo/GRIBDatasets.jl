@@ -5,6 +5,7 @@ abstract type AbstractDimType end
 abstract type Geography <: AbstractDimType end
 abstract type Vertical <: AbstractDimType end
 abstract type OtherDim <: AbstractDimType end
+const NonHorizontal = Union{Vertical, OtherDim}
 
 struct DimensionCoords <: Geography end 
 struct NonDimensionCoords <: Geography end
@@ -33,7 +34,8 @@ function _geography(index::FileIndex)::Type{<:Geography}
 end
 
 function _alldims(index::FileIndex)
-    Tuple(vcat(_geodims(index, _geography(index)), _otherdims(index)))
+    dims = vcat(_geodims(index, _geography(index)), _otherdims(index))
+    NTuple{length(dims), Dimension}(dims)
 end
 
 function _otherdims(index::FileIndex; coord_keys = vcat(keys(COORD_ATTRS) |> collect, "typeOfLevel"))
@@ -42,7 +44,7 @@ end
 
 function _detect_vertical(key, headers)
     if key == "typeOfLevel"
-        Dimension{Vertical}("level", length(headers[key]))
+        Dimension{Vertical}("level", length(headers["level"]))
     else
         Dimension{OtherDim}(key, length(headers[key]))
     end
@@ -63,6 +65,8 @@ end
 function _geodims(index::FileIndex, ::Type{NoCoords})
     Dimension("values", getone(index, "numberOfPoints")) 
 end
+
+_size_dims(dims) = Tuple([d.length for d in dims])
 
 Base.show(io::IO, mime::MIME"text/plain", dim::Dimension) = print(io, "$(dim.name) = $(dim.length)")
 function Base.show(io::IO, mime::MIME"text/plain", dims::Tuple{Vararg{<:Dimension}}) 
