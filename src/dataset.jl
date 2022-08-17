@@ -21,6 +21,12 @@ GRIBDataset(filepath::AbstractString) = GRIBDataset(FileIndex(filepath))
 Base.keys(ds::Dataset) = getvars(ds)
 Base.getindex(ds::Dataset, key) = Variable(ds, string(key))
 
+function Base.show(io::IO, mime::MIME"text/plain", ds::Dataset)
+    println(io, "Dataset from file: $(ds.index.grib_path)")
+    show(io, mime, ds.dims)
+    println(io, "with attributes:")
+    show(io, mime, ds.attrib)
+end
 
 function dataset_attributes(index::FileIndex)
     attributes = Dict{String, Any}()
