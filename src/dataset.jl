@@ -19,7 +19,13 @@ end
 GRIBDataset(filepath::AbstractString) = GRIBDataset(FileIndex(filepath))
 
 Base.keys(ds::Dataset) = getvars(ds)
+Base.haskey(ds::Dataset, key) = key in keys(ds)
 Base.getindex(ds::Dataset, key) = Variable(ds, string(key))
+
+getlayersid(ds::GRIBDataset) = ds.index["paramId"]
+getlayersname(ds::GRIBDataset) = ds.index["cfVarName"]
+
+getvars(ds::GRIBDataset) = vcat(keys(ds.dims), getlayersname(ds))
 
 _dim_values(ds::GRIBDataset, dim::Dimension{<:NonHorizontal}) = _dim_values(ds.index, dim)
 _dim_values(ds::GRIBDataset, dim::Dimension{Geography}) = _dim_values(ds.index, dim)

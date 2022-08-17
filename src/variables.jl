@@ -1,8 +1,3 @@
-getlayersid(ds::GRIBDataset) = ds.index["paramId"]
-getlayersname(ds::GRIBDataset) = ds.index["cfVarName"]
-
-getvars(ds::GRIBDataset) = vcat(keys(ds.dims), getlayersname(ds))
-
 """
     DiskValues{T, N, M} <: DA.AbstractDiskArray{T, N}
 Object that maps the dimensions lookup to GRIB messages offsets.
@@ -62,8 +57,8 @@ function DA.readblock!(A::DiskValues, aout, i::AbstractUnitRange...)
 
     rebased_range = Tuple([1:length(range) for range in headers_dim_inds])
 
-    file = GribFile(grib_path)
-    # GribFile(grib_path) do file
+    # file = GribFile(grib_path)
+    GribFile(grib_path) do file
         for (I, Ir) in zip(CartesianIndices(headers_dim_inds), CartesianIndices(rebased_range))
             offset = A.offsets[I]
             message_index = findfirst(all_message_cumsum .> offset)
@@ -76,9 +71,12 @@ function DA.readblock!(A::DiskValues, aout, i::AbstractUnitRange...)
             values = message["values"][message_dim_inds...]
             aout[message_dim_inds..., Tuple(Ir)...] = replace(values, missing_value => missing)
         end
-    # end
-    destroy(file)
+    end
+    # destroy(file)
 end
+
+DA.eachchunk(A::DiskValues) = DA.GridChunks(A, size(A))
+DA.haschunks(A::DiskValues) = DA.Unchunked()
 
 """
     message_indices(index::FileIndex, mind::MessageIndex, dims::Dimensions)
