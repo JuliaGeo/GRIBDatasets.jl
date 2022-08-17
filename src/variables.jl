@@ -21,7 +21,7 @@ julia> dv.offsets[3, 2]
 ```
 """
 struct DiskValues{T, N, M} <: DA.AbstractDiskArray{Union{Missing, T}, N}
-    ds::GRIBDataset{T, N}
+    ds::GRIBDataset
     layer_index::FileIndex{T}
     offsets::Array{Int, M}
     message_dims::Dimensions
@@ -129,20 +129,6 @@ function Variable(ds::GRIBDataset, dim::Dimension)
     attributes = dim_attributes(dim)
     Variable(ds, dim.name, (dim,), vals, attributes)
 end
-
-function _dim_values(index::FileIndex, dim::Dimension{<:NonHorizontal})
-    index[dim.name]
-end
-_dim_values(ds::GRIBDataset, dim::Dimension{<:NonHorizontal}) = _dim_values(ds.index, dim)
-
-function _dim_values(index::FileIndex, dim::Dimension{Geography})
-    if dim.name in ["longitude", "x"]
-        index._first_data[1][:, 1]
-    elseif dim.name in ["latitude", "y"]
-        index._first_data[2][1, :]
-    end
-end
-_dim_values(ds::GRIBDataset, dim::Dimension{Geography}) = _dim_values(ds.index, dim)
 
 function layer_attributes(index::FileIndex)
     attributes = Dict{String, Any}()

@@ -21,9 +21,15 @@ GRIBDataset(filepath::AbstractString) = GRIBDataset(FileIndex(filepath))
 Base.keys(ds::Dataset) = getvars(ds)
 Base.getindex(ds::Dataset, key) = Variable(ds, string(key))
 
+_dim_values(ds::GRIBDataset, dim::Dimension{<:NonHorizontal}) = _dim_values(ds.index, dim)
+_dim_values(ds::GRIBDataset, dim::Dimension{Geography}) = _dim_values(ds.index, dim)
+
+
 function Base.show(io::IO, mime::MIME"text/plain", ds::Dataset)
     println(io, "Dataset from file: $(ds.index.grib_path)")
     show(io, mime, ds.dims)
+    println(io, "Layers:")
+    println(io, join(getlayersname(ds), ", "))
     println(io, "with attributes:")
     show(io, mime, ds.attrib)
 end

@@ -39,10 +39,18 @@ function _alldims(index::FileIndex)
 end
 
 function _otherdims(index::FileIndex; coord_keys = vcat(keys(COORD_ATTRS) |> collect, "typeOfLevel"))
-    [_detect_vertical(key, index) for key in coord_keys if haskey(index, key)]
+    dims = Dimension[]
+    for key in coord_keys
+        # For the moment, we only consider `valid_time` key for time dimension.
+        # This should be extended in the future
+        if haskey(index, key) && key ∉ IGNORED_COORDS
+            push!(dims, _build_otherdims(key, index))
+        end
+    end
+    dims
 end
 
-function _detect_vertical(key, headers)
+function _build_otherdims(key, headers)
     if key == "typeOfLevel"
         Dimension{Vertical}("level", length(headers["level"]))
     else
@@ -63,10 +71,32 @@ function _geodims(index::FileIndex, ::Type{NonDimensionCoords})
 end
 
 function _geodims(index::FileIndex, ::Type{NoCoords})
-    Dimension("values", getone(index, "numberOfPoints")) 
+    Dimension{OtherDim}("values", getone(index, "numberOfPoints")) 
 end
 
 _size_dims(dims) = Tuple([d.length for d in dims])
+
+function _dim_values(index::FileIndex, dim::Dimension{<:NonHorizontal})
+    vals = index[dim.name]
+    # Convert time dimension to DateTime
+    # if occursin("time", dim.name)
+    #     vals = Dates.Second.(vals) .+ DEFAULT_EPOCH
+    # end
+    # It can happen that dimension values are not unique, especially in
+    # GRIB file with duplicate valid times. I don't know how to handle such case. 
+    if length(unique(vals)) !== length(vals)
+        error("The values of dimension $(dim.name) are not unique.")
+    end
+    vals
+end
+
+function _dim_values(index::FileIndex, dim::Dimension{Geography})
+    if dim.name in ["longitude", "x"]
+        index._first_data[1][:, 1]
+    elseif dim.name in ["latitude", "y"]
+        index._first_data[2][1, :]
+    end
+end
 
 Base.show(io::IO, mime::MIME"text/plain", dim::Dimension) = print(io, "$(dim.name) = $(dim.length)")
 function Base.show(io::IO, mime::MIME"text/plain", dims::Tuple{Vararg{<:Dimension}}) 

@@ -1,4 +1,9 @@
-
+const IGNORED_COORDS = [
+    "time",
+    "verifying_time",
+    "indexing_time",
+    "step"
+]
 
 const GLOBAL_ATTRIBUTES_KEYS = [
     "edition", "centre",
