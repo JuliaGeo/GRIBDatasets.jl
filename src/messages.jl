@@ -1,7 +1,3 @@
-using Dates
-using GRIB
-
-
 """
     $(typeof(GRIB_STEP_UNITS_TO_SECONDS))
 
@@ -132,7 +128,7 @@ function build_valid_time end
 
 """
 ```jldoctest
-julia> CfGRIB.build_valid_time(10, 10)
+julia> GDS.build_valid_time(10, 10)
 ((), 36010)
 ```
 """
@@ -149,7 +145,7 @@ end
 
 """
 ```jldoctest
-julia> CfGRIB.build_valid_time([10], 10)
+julia> GDS.build_valid_time([10], 10)
 (("time",), [36010])
 ```
 """
@@ -166,7 +162,7 @@ end
 
 """
 ```jldoctest
-julia> CfGRIB.build_valid_time(1, [10])
+julia> GDS.build_valid_time(1, [10])
 (("step",), [36001])
 ```
 """
@@ -183,12 +179,12 @@ end
 
 """
 ```jldoctest
-julia> CfGRIB.build_valid_time([10, 10], [10, 10])
+julia> GDS.build_valid_time([10, 10], [10, 10])
 (("time", "step"), [36010 36010; 36010 36010])
 ```
 
 ```jldoctest
-julia> CfGRIB.build_valid_time([10], [10])
+julia> GDS.build_valid_time([10], [10])
 ((), 36010)
 ```
 """
@@ -212,9 +208,6 @@ end
 """
 Dictionary which maps a key to a conversion method. The first function is the
 'to' conversion, the second is 'from'.
-
-TODO: Actually applying the `from_grib_step` function results in different values
-to cfgrib.py, so `step -> (from_grib_step, to_grib_step)` is currently disabled.
 
 Currently converts:
 
@@ -240,15 +233,12 @@ A GRIB message containing `20160501` as the date key and `0` as the time key
 would end up calling:
 
 ```jldoctest
-julia> CfGRIB.COMPUTED_KEYS["time"](20160501, 0)
+julia> GDS.COMPUTED_KEYS["time"][1](20160501, 0)
 1462060800
 ```
 """
 COMPUTED_KEYS = Dict(
     "time" => (from_grib_date_time, to_grib_date_time),
-    #  TODO: Actually applying the from_grib_step function results in different
-    #  values to cfgrib.py...?
-    # "step" => (from_grib_step, to_grib_step),
     "valid_time" => (message -> from_grib_date_time(message, date_key="validityDate", time_key="validityTime"),
         message -> to_grib_date_time(message, date_key="validityDate", time_key="validityTime"),),
     "verifying_time" => (from_grib_month, m -> throw(ErrorException("Unimplemented"))),
@@ -277,12 +267,34 @@ function read_message(message::GRIB.Message, key::String)
     return value
 end
 
+"""
+    MessageIndex
+
+Stored information about a GRIB message.
+"""
 struct MessageIndex
     headers::Dict{String, Any}
     offset::Int64
     length::Int64
 end
 
+"""
+    MessageIndex(message::GRIB.Message; index_keys = ALL_KEYS)
+
+Read a GRIB `message` and store the requested `index_keys` in memory as a [`MessageIndex`](@ref). The keys
+can be accessed with `getindex`.
+
+```jldoctest; setup = :(using GRIB)
+f = GribFile(example_file) 
+message = first(f)
+mind = GDS.MessageIndex(message)
+destroy(f)
+mind["name"]
+
+# output
+"Geopotential"
+```
+"""
 function MessageIndex(message::GRIB.Message; index_keys = ALL_KEYS)
     values = read_message.(Ref(message), index_keys)
     offset = Int(message["offset"])
@@ -296,6 +308,9 @@ Base.getindex(mindex::MessageIndex, args...) = getindex(mindex.headers, args...)
 getoffset(mindex::MessageIndex) = mindex.offset
 getheaders(mindex::MessageIndex) = mindex.headers
 Base.length(mindex::MessageIndex) = mindex.length
+
+Base.show(io::IO, mime::MIME"text/plain", mind::MessageIndex) = show(io, mime, getheaders(mind))
+
 
 function filter_messages(mindexs::Vector{<:MessageIndex}, k::AbstractString, v)
     filter(mi -> getheaders(mi)[k] == v, mindexs)
