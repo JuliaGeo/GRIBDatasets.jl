@@ -1,7 +1,13 @@
 using GRIBDatasets
 using Documenter
 
-DocMeta.setdocmeta!(GRIBDatasets, :DocTestSetup, :(using GRIBDatasets); recursive=true)
+
+setup = quote 
+    using GRIBDatasets
+    const GDS = GRIBDatasets
+    example_file = "../test/sample-data/era5-levels-members.grib"
+    end
+DocMeta.setdocmeta!(GRIBDatasets, :DocTestSetup, setup; recursive=true)
 
 makedocs(;
     modules=[GRIBDatasets],
@@ -16,6 +22,7 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Internals" => "internals.md",
     ],
 )
 
