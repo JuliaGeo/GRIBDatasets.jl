@@ -59,7 +59,7 @@ jobs:
             setup = quote 
               using GRIBDatasets
               const GDS = GRIBDatasets
-              example_file = "../test/sample-data/era5-levels-members.grib"
+              example_file = joinpath(dirname(pathof(GRIBDatasets)), "..", "test", "sample-data", "era5-levels-members.grib")
               end
             DocMeta.setdocmeta!(GRIBDatasets, :DocTestSetup, setup; recursive=true)
             doctest(GRIBDatasets)'
