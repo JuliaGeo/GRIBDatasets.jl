@@ -87,7 +87,8 @@ function _dim_values(index::FileIndex, dim::Dimension{<:NonHorizontal})
     if length(unique(vals)) !== length(vals)
         error("The values of dimension $(dim.name) are not unique.")
     end
-    vals
+    # identity is used to automatically convert from Any to Int or Float
+    identity.(vals)
 end
 
 function _dim_values(index::FileIndex, dim::Dimension{Geography})

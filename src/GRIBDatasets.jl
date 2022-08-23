@@ -6,7 +6,6 @@ using DataStructures
 using DiskArrays
 
 const DA = DiskArrays
-# Write your package code here.
 
 include("constants.jl")
 include("utils.jl")
