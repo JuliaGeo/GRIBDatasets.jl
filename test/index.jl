@@ -2,30 +2,30 @@ using GRIBDatasets
 using GRIB
 using GRIBDatasets: FileIndex, filter_messages, with_messages, enforce_unique_attributes
 
-const dir_tests = abspath(joinpath(dirname(pathof(GRIBDatasets)), "..", "test"))
-const dir_testfiles = abspath(joinpath(dir_tests, "sample-data"))
 
-grib_path = readdir(dir_testfiles, join=true)[2]
+@testset "index creation" begin
+    grib_path = joinpath(dir_testfiles, "era5-levels-members.grib")
+    index = FileIndex(grib_path)
 
-index = FileIndex(grib_path)
+    @test index["edition"] == [1]
+    @test GDS.getone(index, "Nx") == 120
+    # More than 1 variable in this dataset, should error
+    @test_throws ErrorException GDS.getone(index, "shortName")
 
-filter_messages(index, "paramId", 129)
-filter_messages(index, paramId = 129, level = 500)
-with_messages(index; paramId = 129, level = 500) do m
-    println(m["level"])
+    @test length(index) == 160
 end
 
-enforce_unique_attributes(index, ["edition"])
-# @benchmark FileIndex(grib_path)
-# @benchmark GribFile(grib_path) do f
-#     for m in f
-#         string.(keys(m))
-#     end
+@testset "filtering index" begin
+    grib_path = joinpath(dir_testfiles, "era5-levels-members.grib")
+    index = FileIndex(grib_path)
+
+    mindexs = GDS.getmessages(index)
+    @test mindexs isa Vector{MessageIndex}
+
+    @test length(filter_messages(mindexs, "shortName", "z")) == 80
+    @test length(filter_messages(mindexs, shortName = "z", number = 1)) == 8
+end
+
+# with_messages(index; paramId = 129, level = 500) do m
+#     println(m["level"])
 # end
-
-d = DefaultDict{AbstractString, Vector{Any}}(() -> Vector{Any}())
-for (k, v) in messages[1].headers
-    if v ∉ d[k]
-        push!(d[k], v)
-    end
-end

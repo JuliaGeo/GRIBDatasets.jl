@@ -88,13 +88,36 @@ end
 getmessages(index::FileIndex) = index.messages
 Base.getindex(index::FileIndex, key::String) = getheaders(index)[key]
 Base.haskey(index::FileIndex, key::String) = haskey(getheaders(index), key)
+
+"""
+    length(index::FileIndex)
+The number of messages in the index.
+"""
 Base.length(index::FileIndex) = length(getmessages(index))
 
+"""
+    getone(index::FileIndex, key::AbstractString)
+Check if only one value exists in the `index` at the specified ´key´ and return the value.
+"""
 function getone(index::FileIndex, key::AbstractString) 
     val = getheaders(index)[key]
     length(val) !== 1 ? error("Expected 1 value for $key, found $(length(val)) instead") : first(val)
 end
 
+"""
+    filter_messages(index::FileIndex{T}, args...; kwargs...)
+Filter the messages in the `index` and return a new updated index. The filtering keys must be expressed as keyword arguments pair.
+
+```jldoctest
+index = FileIndex(example_file)
+
+filtered = filter_messages(index, shortName = "z", number = 1)
+length(filtered)
+
+# output
+8
+```
+"""
 function filter_messages(index::FileIndex{T}, args...; kwargs...) where T
     mindexs = filter_messages(getmessages(index), args...; kwargs...)
     unique_headers = build_unique_headers(mindexs)

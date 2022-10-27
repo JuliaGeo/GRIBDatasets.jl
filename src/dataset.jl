@@ -3,7 +3,27 @@
 const GRIBIterable = Union{AbstractDim}
 Base.length(a::GRIBIterable) = length(keys(a))
 
+"""
+    GRIBDataset{T, N}
+Mapping of a GRIB file to a structure that follows the CF conventions.
 
+It can be created with the path to the GRIB file:
+
+```julia
+ds = GRIBDataset(example_file);
+```
+
+The list of variables can be accessed:
+
+```julia
+keys(ds)
+```
+
+We can then index any of the variables:
+```julia
+ds["z"]
+```
+"""
 struct GRIBDataset{T, N}
     index::FileIndex{T}
     dims::NTuple{N, Dimension}
@@ -28,7 +48,7 @@ getlayersname(ds::GRIBDataset) = ds.index["cfVarName"]
 getvars(ds::GRIBDataset) = vcat(keys(ds.dims), getlayersname(ds))
 
 _dim_values(ds::GRIBDataset, dim::Dimension{<:NonHorizontal}) = _dim_values(ds.index, dim)
-_dim_values(ds::GRIBDataset, dim::Dimension{Geography}) = _dim_values(ds.index, dim)
+_dim_values(ds::GRIBDataset, dim::Dimension{Horizontal}) = _dim_values(ds.index, dim)
 
 
 function Base.show(io::IO, mime::MIME"text/plain", ds::Dataset)

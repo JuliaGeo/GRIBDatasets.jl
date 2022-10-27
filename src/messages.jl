@@ -270,7 +270,8 @@ end
 """
     MessageIndex
 
-Stored information about a GRIB message.
+Stored information about a GRIB message. The keys can be accessed with `getindex`. The message offset and length are stored as property of the struct.
+
 """
 struct MessageIndex
     headers::Dict{String, Any}
@@ -281,9 +282,7 @@ end
 """
     MessageIndex(message::GRIB.Message; index_keys = ALL_KEYS)
 
-Read a GRIB `message` and store the requested `index_keys` in memory as a [`MessageIndex`](@ref). The keys
-can be accessed with `getindex`.
-
+Read a GRIB `message` and store the requested `index_keys` in memory as a [`MessageIndex`](@ref). 
 ```jldoctest; setup = :(using GRIB)
 f = GribFile(example_file) 
 message = first(f)
@@ -304,17 +303,17 @@ function MessageIndex(message::GRIB.Message; index_keys = ALL_KEYS)
     MessageIndex(headers, offset, length)
 end
 
-Base.getindex(mindex::MessageIndex, args...) = getindex(mindex.headers, args...)
 getoffset(mindex::MessageIndex) = mindex.offset
 getheaders(mindex::MessageIndex) = mindex.headers
 Base.length(mindex::MessageIndex) = mindex.length
+Base.getindex(mindex::MessageIndex, args...) = getindex(getheaders(mindex), args...)
 
 Base.show(io::IO, mime::MIME"text/plain", mind::MessageIndex) = show(io, mime, getheaders(mind))
-
 
 function filter_messages(mindexs::Vector{<:MessageIndex}, k::AbstractString, v)
     filter(mi -> getheaders(mi)[k] == v, mindexs)
 end
+
 
 function filter_messages(mindexs::Vector{<:MessageIndex}; query...)
     ms = deepcopy(mindexs)

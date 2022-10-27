@@ -30,7 +30,7 @@ the dimensions values in `dims`.
 """
 function DiskValues(ds::GRIBDataset, layer_index::FileIndex{T}, dims::Dimensions) where T
     otherdims = Tuple([dim for dim in dims if dim isa Dimension{<:NonHorizontal}])
-    horizdims = Tuple([dim for dim in dims if dim isa Dimension{<:Geography}])
+    horizdims = Tuple([dim for dim in dims if dim isa Dimension{<:Horizontal}])
     N = length(dims)
     M = length(otherdims)
     offsets_array = Array{Int, M}(undef, _size_dims(otherdims))
@@ -56,9 +56,10 @@ function DA.readblock!(A::DiskValues, aout, i::AbstractUnitRange...)
     missing_value = getone(general_index, "missingValue")
 
     rebased_range = Tuple([1:length(range) for range in headers_dim_inds])
+    rebased_message_dim = Tuple([1:length(range) for range in message_dim_inds])
 
-    # file = GribFile(grib_path)
-    GribFile(grib_path) do file
+    file = GribFile(grib_path)
+    # GribFile(grib_path) do file
         for (I, Ir) in zip(CartesianIndices(headers_dim_inds), CartesianIndices(rebased_range))
             offset = A.offsets[I]
             message_index = findfirst(all_message_cumsum .> offset)
@@ -69,10 +70,10 @@ function DA.readblock!(A::DiskValues, aout, i::AbstractUnitRange...)
             seek(file, message_index)
             message = Message(file)
             values = message["values"][message_dim_inds...]
-            aout[message_dim_inds..., Tuple(Ir)...] = replace(values, missing_value => missing)
+            aout[rebased_message_dim..., Tuple(Ir)...] = replace(values, missing_value => missing)
         end
-    end
-    # destroy(file)
+    # end
+    destroy(file)
 end
 
 DA.eachchunk(A::DiskValues) = DA.GridChunks(A, size(A))
@@ -153,4 +154,8 @@ end
 function Base.show(io::IO, mime::MIME"text/plain", var::Variable)
     println(io, "Variable `$(var.name)` with dims:")
     show(io, mime, var.dims)
+end
+
+function Base.show(io::IO, var::Variable)
+    show(io, var.values)
 end
