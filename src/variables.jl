@@ -9,15 +9,23 @@ Object that maps the dimensions lookup to GRIB messages offsets.
 julia> dv.other_dims
 Dimensions:
          number = 10
+         valid_time = 4
          level = 2
 
-julia> dv.offsets[3, 2]
-324720
+julia> size(dv.offsets)
+(10, 4, 2)
+julia> dv.message_dims
+Dimensions:
+         longitude = 120
+         latitude = 61
 ```
 """
 struct DiskValues{T, N, M} <: DA.AbstractDiskArray{Union{Missing, T}, N}
+    "Reference to the dataset"
     ds::GRIBDataset
+    "FileIndex filtered according to the current variable"
     layer_index::FileIndex{T}
+    "Maps the non-message dimensions to the message offset"
     offsets::Array{Int, M}
     message_dims::Dimensions
     other_dims::Dimensions
@@ -44,6 +52,9 @@ end
 
 Base.size(dv::DiskValues) = (_size_dims(dv.message_dims)..., _size_dims(dv.other_dims)...)
 
+# Since some dimensions (typically the horizontal lon/lat dimensions) are encoded in the message data,
+# we have to threat them separately from the other dimensions (typically time, number, vertical...). This is
+# what makes this code quite complicated. There's probably a clever/prettier way of doing this, but this one works for now...
 function DA.readblock!(A::DiskValues, aout, i::AbstractUnitRange...)
     general_index = A.ds.index
     grib_path = general_index.grib_path
@@ -79,10 +90,6 @@ end
 DA.eachchunk(A::DiskValues) = DA.GridChunks(A, size(A))
 DA.haschunks(A::DiskValues) = DA.Unchunked()
 
-"""
-    message_indices(index::FileIndex, mind::MessageIndex, dims::Dimensions)
-Find at which indices in `dims` correspond each GRIB message in `index`.
-"""
 function message_indices(index::FileIndex, mind::MessageIndex, dims::Dimensions)
     indices = Int[]
     for dim in dims
@@ -95,8 +102,16 @@ function message_indices(index::FileIndex, mind::MessageIndex, dims::Dimensions)
     indices
 end
 
+"""
+    message_indices(index::FileIndex, mind::MessageIndex, dims::Dimensions)
+Find at which indices in `dims` correspond each GRIB message in `index`.
+"""
 messages_indices(index::FileIndex, dims::Dimensions) = [message_indices(index, mind, dims) for mind in index.messages]
 
+"""
+    Variable <: AbstractArray
+Variable of a dataset `ds`. It can be a layer or a dimension. In case of a layer, the values are lazily loaded when it's sliced.
+"""
 struct Variable{T, N, AT <: Union{Array{T, N}, DA.AbstractDiskArray{T, N}}} <: AbstractArray{T, N}
     ds::GRIBDataset
     name::String
