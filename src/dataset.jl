@@ -103,6 +103,7 @@ end
 function dataset_attributes(index::FileIndex)
     attributes = Dict{String, Any}()
     attributes["Conventions"] = "CF-1.7"
+    attributes["source"] = index.grib_path
     # if haskey(index, "centreDescription") 
     #     attributes["institution"] = index["centreDescription"]
     # end
@@ -112,7 +113,7 @@ function dataset_attributes(index::FileIndex)
     # so we just join the different values
     for key in GLOBAL_ATTRIBUTES_KEYS
         if haskey(index, key) 
-            attributes[key] = join(index[key])
+            attributes[key] = join(index[key], ", ")
         end
     end
     return attributes

@@ -154,7 +154,7 @@ function layer_attributes(index::FileIndex)
 
     for key in data_var_attrs_keys
         if haskey(index, key) 
-            attributes[key] = join(index[key])
+            attributes[key] = join(index[key], ", ")
         end
     end
     attributes
