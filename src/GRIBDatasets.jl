@@ -17,6 +17,6 @@ include("dimensions.jl")
 include("dataset.jl")
 include("variables.jl")
 
-export GRIBDataset
+export GRIBDataset, FileIndex
 
 end

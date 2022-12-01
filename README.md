@@ -33,7 +33,7 @@ Dict{String, Any} with 5 entries:
   "Conventions"       => "CF-1.7"
 ```
 
-Then you can access a variable with `z = ds["z"]`, and slice according to the variable dimensions:
+You can than access a variable with `z = ds["z"]`, and slice according to the variable dimensions:
 
 ```julia
 z[:,:, 2, 1:2, 1]

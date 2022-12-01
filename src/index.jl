@@ -1,8 +1,5 @@
 using DataStructures
 
-
-export FileIndex
-
 """
 Store for the messages of a GRIB file. Keeps track of the offset of the GRIB messages so they
 can be easily `seeked`. The `unique_headers` property gives all the different values for the keys
@@ -111,7 +108,7 @@ Filter the messages in the `index` and return a new updated index. The filtering
 ```jldoctest
 index = FileIndex(example_file)
 
-filtered = filter_messages(index, shortName = "z", number = 1)
+filtered = GRIBDatasets.filter_messages(index, shortName = "z", number = 1)
 length(filtered)
 
 # output
