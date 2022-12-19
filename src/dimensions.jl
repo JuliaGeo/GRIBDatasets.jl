@@ -16,7 +16,7 @@ struct Dimension{T<:AbstractDimType} <: AbstractDim
     length::Int
 end
 
-const Dimensions = Tuple{Vararg{<:Dimension}}
+const Dimensions = Tuple{AbstractDim, Vararg{AbstractDim}}
 
 Base.keys(dims::Dimensions) = [d.name for d in dims]
 Base.in(name::String, dims::Dimensions) = name in keys(dims)
