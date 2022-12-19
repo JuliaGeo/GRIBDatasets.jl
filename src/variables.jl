@@ -27,8 +27,8 @@ struct DiskValues{T, N, M} <: DA.AbstractDiskArray{Union{Missing, T}, N}
     layer_index::FileIndex{T}
     "Maps the non-message dimensions to the message offset"
     offsets::Array{Int, M}
-    message_dims::Dimensions
-    other_dims::Dimensions
+    message_dims::TupleDims
+    other_dims::TupleDims
 end
 
 """
@@ -37,7 +37,7 @@ Create a `DiskValues` object from matching the GRIB messages headers in `layer_i
 the dimensions values in `dims`.
 """
 function DiskValues(ds::GRIBDataset, layer_index::FileIndex{T}, dims::Dimensions) where T
-    otherdims = Tuple([dim for dim in dims if dim isa Dimension{<:NonHorizontal}])
+    otherdims = from_message(Dimensions(ds))
     horizdims = Tuple([dim for dim in dims if dim isa Dimension{<:Horizontal}])
     N = length(dims)
     M = length(otherdims)
@@ -124,12 +124,13 @@ Base.size(var::Variable) = _size_dims(var.dims)
 Base.getindex(var::Variable, I...) = getindex(parent(var), I...)
 
 function Variable(ds::GRIBDataset, key)
-    if key in ds.dims
-        dim = ds.dims[key]
+    dims = Dimensions(ds.index)
+    if key in dims
+        dim = dims[key]
         Variable(ds, dim)
     elseif key in getlayersname(ds)
         layer_index = filter_messages(ds.index, cfVarName = key)
-        dims = _alldims(layer_index)
+        layer_dims = Dimensions(layer_index)
         dv = DiskValues(ds, layer_index, dims)
         attributes = layer_attributes(layer_index)
         Variable(ds, string(key), dims, dv, attributes)

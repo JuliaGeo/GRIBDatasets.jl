@@ -1,5 +1,5 @@
 """
-    GRIBDataset{T, N}
+    GRIBDataset{T}
 Mapping of a GRIB file to a structure that follows the CF conventions.
 
 It can be created with the path to the GRIB file:
@@ -64,16 +64,16 @@ julia> z[1:4, 3:6, 1, 1:2, 1]
  51133.3  50806.3  50351.3  50399.3
 ```
 """
-struct GRIBDataset{T, N}
+struct GRIBDataset{T}
     index::FileIndex{T}
-    dims::NTuple{N, Dimension}
+    # dims::NTuple{N, Dimension}
     attrib::Dict{String, Any}
 end
 
 const Dataset = GRIBDataset
 
 function GRIBDataset(index::FileIndex)
-    GRIBDataset(index, _alldims(index), dataset_attributes(index)) 
+    GRIBDataset(index, dataset_attributes(index)) 
 end
 
 GRIBDataset(filepath::AbstractString) = GRIBDataset(FileIndex(filepath))
@@ -84,16 +84,18 @@ Base.getindex(ds::Dataset, key) = Variable(ds, string(key))
 
 getlayersid(ds::GRIBDataset) = ds.index["paramId"]
 getlayersname(ds::GRIBDataset) = string.(ds.index["cfVarName"])
+getdims(ds::GRIBDataset) = getdims(Dimensions(ds.index))
 
-getvars(ds::GRIBDataset) = vcat(keys(ds.dims), getlayersname(ds))
+getvars(ds::GRIBDataset) = vcat(keys(ds.index), getlayersname(ds))
 
 _dim_values(ds::GRIBDataset, dim) = _dim_values(ds.index, dim)
+Dimensions(ds::GRIBDataset) = Dimensions(ds.index)
 # _dim_values(ds::GRIBDataset, dim::Dimension{Horizontal}) = _dim_values(ds.index, dim)
 
 
 function Base.show(io::IO, mime::MIME"text/plain", ds::Dataset)
     println(io, "Dataset from file: $(ds.index.grib_path)")
-    show(io, mime, ds.dims)
+    show(io, mime, getdims(ds))
     println(io, "Layers:")
     println(io, join(getlayersname(ds), ", "))
     println(io, "with attributes:")

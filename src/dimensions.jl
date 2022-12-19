@@ -16,11 +16,21 @@ struct Dimension{T<:AbstractDimType} <: AbstractDim
     length::Int
 end
 
-const Dimensions = Tuple{Vararg{<:Dimension}}
+const TupleDims = Tuple{Vararg{<:Dimension}}
 
-Base.keys(dims::Dimensions) = [d.name for d in dims]
+struct Dimensions
+    index::FileIndex
+end
+
+getdims(dims::Dimensions) = _alldims(dims.index)
+Base.keys(dims::Dimensions) = [dim.name for dim in getdims(dims)]
 Base.in(name::String, dims::Dimensions) = name in keys(dims)
 Base.getindex(dims::Dimensions, name::String) = first(dims[keys(dims) .== name])
+Base.getindex(dims::Dimensions, args...) = getindex(getdims(dims), args...)
+
+from_message(dims::Dimensions)::TupleDims = Tuple([dim for dim in getdims(dims) if dim isa Dimension{<:Horizontal}])
+from_index(dims::Dimensions)::TupleDims = Tuple([dim for dim in getdims(dims) if dim isa Dimension{<:NonHorizontal}])
+
 
 function _horizontaltype(index::FileIndex)::Type{<:Horizontal}
     grid_type = getone(index, "gridType")
