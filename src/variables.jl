@@ -37,8 +37,8 @@ Create a `DiskValues` object from matching the GRIB messages headers in `layer_i
 the dimensions values in `dims`.
 """
 function DiskValues(ds::GRIBDataset, layer_index::FileIndex{T}, dims::Dimensions) where T
-    otherdims = from_message(Dimensions(ds))
-    horizdims = Tuple([dim for dim in dims if dim isa Dimension{<:Horizontal}])
+    otherdims = from_message(dims)
+    horizdims = from_index(dims)
     N = length(dims)
     M = length(otherdims)
     offsets_array = Array{Int, M}(undef, _size_dims(otherdims))
