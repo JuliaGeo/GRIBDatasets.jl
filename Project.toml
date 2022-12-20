@@ -1,7 +1,7 @@
 name = "GRIBDatasets"
 uuid = "82be9cdb-ee19-4151-bdb3-b400788d9abc"
 authors = ["tcarion <tristan.carion@gmail.com> and contributors"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
