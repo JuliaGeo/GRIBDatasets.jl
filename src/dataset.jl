@@ -88,6 +88,7 @@ getlayersname(ds::GRIBDataset) = string.(ds.index["cfVarName"])
 getvars(ds::GRIBDataset) = vcat(keys(ds.dim), getlayersname(ds))
 
 _dim_values(ds::GRIBDataset, dim) = _dim_values(ds.index, dim)
+_get_dim(ds::GRIBDataset, key) = _get_dim(ds.dim, key)
 # _dim_values(ds::GRIBDataset, dim::Dimension{Horizontal}) = _dim_values(ds.index, dim)
 
 

@@ -1,5 +1,5 @@
 using GRIBDatasets
-using GRIBDatasets: _alldims, _horizontaltype, _horizdim, _dim_values, _size_dims
+using GRIBDatasets: _alldims, _horizontaltype, _horizdim, _dim_values, _size_dims, _get_dim
 using GRIBDatasets: Horizontal, Vertical, Other, NonHorizontal
 using GRIBDatasets: Lonlat, NonDimensionCoords, NoCoords
 using GRIBDatasets: Dimension, Dimensions
@@ -26,6 +26,9 @@ using GRIBDatasets: Dimension, Dimensions
     
     era_alldims = _alldims(era5)
     @test era_alldims isa Dimensions
+
+    @test _get_dim(era_alldims, "longitude") == Dimension{Horizontal}("longitude", 120)
+
     # for lonlat grid, x dim must be one dimensional
     @test _dim_values(era5, era_alldims[1]) isa Vector
     lam_alldims = _alldims(lambert)
@@ -35,8 +38,8 @@ using GRIBDatasets: Dimension, Dimensions
     # first dimensions must be the horizontal ones
     @test keys(era_alldims)[1:2] == ["longitude", "latitude"]
 
-    vertdim = era_alldims["level"]
-    @test length(_dim_values(era5, vertdim)) == vertdim.length
+    vertdim_length = era_alldims["level"]
+    @test vertdim_length == 2
 
     @test _size_dims(era_alldims) == (120, 61, 10, 4, 2)
 end

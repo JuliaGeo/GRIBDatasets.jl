@@ -20,7 +20,7 @@ const Dimensions = Tuple{AbstractDim, Vararg{AbstractDim}}
 
 Base.keys(dims::Dimensions) = [d.name for d in dims]
 Base.in(name::String, dims::Dimensions) = name in keys(dims)
-Base.getindex(dims::Dimensions, name::String) = first(dims[keys(dims) .== name])
+Base.getindex(dims::Dimensions, name::String) = _get_dim(dims, name).length
 
 function _horizontaltype(index::FileIndex)::Type{<:Horizontal}
     grid_type = getone(index, "gridType")
@@ -71,6 +71,12 @@ function _horizdim(index::FileIndex, ::Type{NoCoords})
 end
 
 _size_dims(dims) = Tuple([d.length for d in dims])
+
+function _get_dim(dims, name)::Dimension 
+    fdim = dims[keys(dims) .== name]
+    fdim == () && throw(KeyError(name))
+    return first(fdim)
+end
 
 function _dim_values(index::FileIndex, dim::Dimension{<:NonHorizontal})
     vals = index[dim.name]

@@ -1,6 +1,7 @@
 using GRIBDatasets
 using Test
 using GRIBDatasets: getone
+using GRIBDatasets: Variable
 using GRIBDatasets: DATA_ATTRIBUTES_KEYS, GRID_TYPE_MAP
 
 
@@ -19,6 +20,13 @@ using GRIBDatasets: DATA_ATTRIBUTES_KEYS, GRID_TYPE_MAP
         @test length(ds.dim) == 5
     
         @test ds.attrib["centre"] == getone(index, "centre")
+    end
+
+    @testset "dim as variable" begin
+        dimvar = ds["longitude"]
+        @test dimvar isa Variable
+        @test collect(dimvar) isa AbstractArray
+        @test dimvar[1:2] == [0., 3.]
     end
 
     @testset "variable indexing" begin
@@ -51,7 +59,7 @@ end
         index = FileIndex(testfile)
         println("grid type: ", first(index["gridType"]))
 
-        ds = GRIBDataset(testfile)
+        @time ds = GRIBDataset(testfile)
 
     end
 
