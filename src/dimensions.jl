@@ -16,7 +16,7 @@ struct Dimension{T<:AbstractDimType} <: AbstractDim
     length::Int
 end
 
-const TupleDims = Tuple{Vararg{<:Dimension}}
+const TupleDims = Tuple{AbstractDim, Vararg{AbstractDim}}
 
 struct Dimensions
     index::FileIndex
