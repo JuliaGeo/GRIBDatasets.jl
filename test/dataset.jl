@@ -16,7 +16,7 @@ using GRIBDatasets: DATA_ATTRIBUTES_KEYS, GRID_TYPE_MAP
     
         @test GDS.getlayersname(ds)[1] == "z"
     
-        @test length(ds.dims) == 5
+        @test length(ds.dim) == 5
     
         @test ds.attrib["centre"] == getone(index, "centre")
     end
