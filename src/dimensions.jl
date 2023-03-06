@@ -100,7 +100,7 @@ function _dim_values(index::FileIndex, dim::Dimension{Horizontal})
 end
 
 Base.show(io::IO, mime::MIME"text/plain", dim::Dimension) = print(io, "$(dim.name) = $(dim.length)")
-function Base.show(io::IO, mime::MIME"text/plain", dims::Tuple{Vararg{<:Dimension}}) 
+function Base.show(io::IO, mime::MIME"text/plain", dims::Dimensions) 
     println(io, "Dimensions:")
     for dim in dims
         println(io, "\t $(dim.name) = $(dim.length)")
