@@ -39,6 +39,8 @@ the dimensions values in `dims`.
 function DiskValues(ds::GRIBDataset, layer_index::FileIndex{T}, dims::Dimensions) where T
     otherdims = Tuple([dim for dim in dims if dim isa Dimension{<:NonHorizontal}])
     horizdims = Tuple([dim for dim in dims if dim isa Dimension{<:Horizontal}])
+    # otherdims = _otherdims(layer_index)
+    # horizdims = _horizdim(layer_index, _horizontaltype(layer_index))
     N = length(dims)
     M = length(otherdims)
     offsets_array = Array{Int, M}(undef, _size_dims(otherdims))
@@ -112,7 +114,7 @@ messages_indices(index::FileIndex, dims::Dimensions) = [message_indices(index, m
     Variable <: AbstractArray
 Variable of a dataset `ds`. It can be a layer or a dimension. In case of a layer, the values are lazily loaded when it's sliced.
 """
-struct Variable{T, N, AT <: Union{Array{T, N}, DA.AbstractDiskArray{T, N}}} <: AbstractArray{T, N}
+struct Variable{T, N, AT <: Union{Array{T, N}, DA.AbstractDiskArray{T, N}}} <: AbstractVariable{T,N}
     ds::GRIBDataset
     name::String
     dim::NTuple{N, Dimension}
@@ -122,6 +124,8 @@ end
 Base.parent(var::Variable) = var.values
 Base.size(var::Variable) = _size_dims(var.dim)
 Base.getindex(var::Variable, I...) = getindex(parent(var), I...)
+name(var::Variable) = var.name
+dimnames(var::Variable) = keys(var.dim)
 
 function Variable(ds::GRIBDataset, key)
     if key in ds.dim
@@ -166,11 +170,11 @@ function dim_attributes(dim)
     attributes
 end
 
-function Base.show(io::IO, mime::MIME"text/plain", var::Variable)
-    println(io, "Variable `$(var.name)` with dims:")
-    show(io, mime, var.dim)
-end
+# function Base.show(io::IO, mime::MIME"text/plain", var::Variable)
+#     println(io, "Variable `$(var.name)` with dims:")
+#     show(io, mime, var.dim)
+# end
 
-function Base.show(io::IO, var::Variable)
-    show(io, var.values)
-end
+# function Base.show(io::IO, var::Variable)
+#     show(io, var.values)
+# end

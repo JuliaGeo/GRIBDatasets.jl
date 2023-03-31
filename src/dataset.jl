@@ -64,7 +64,7 @@ julia> z[1:4, 3:6, 1, 1:2, 1]
  51133.3  50806.3  50351.3  50399.3
 ```
 """
-struct GRIBDataset{T, N}
+struct GRIBDataset{T, N} <: AbstractDataset
     index::FileIndex{T}
     dim::NTuple{N, Dimension}
     attrib::Dict{String, Any}
@@ -82,6 +82,9 @@ Base.keys(ds::Dataset) = getvars(ds)
 Base.haskey(ds::Dataset, key) = key in keys(ds)
 Base.getindex(ds::Dataset, key) = Variable(ds, string(key))
 
+path(ds::GRIBDataset) = ds.index.grib_path
+dim(ds::GRIBDataset) = Dict(pairs(ds.dim))
+
 getlayersid(ds::GRIBDataset) = ds.index["paramId"]
 getlayersname(ds::GRIBDataset) = string.(ds.index["cfVarName"])
 
@@ -92,14 +95,14 @@ _get_dim(ds::GRIBDataset, key) = _get_dim(ds.dim, key)
 # _dim_values(ds::GRIBDataset, dim::Dimension{Horizontal}) = _dim_values(ds.index, dim)
 
 
-function Base.show(io::IO, mime::MIME"text/plain", ds::Dataset)
-    println(io, "Dataset from file: $(ds.index.grib_path)")
-    show(io, mime, ds.dim)
-    println(io, "Layers:")
-    println(io, join(getlayersname(ds), ", "))
-    println(io, "with attributes:")
-    show(io, mime, ds.attrib)
-end
+# function Base.show(io::IO, mime::MIME"text/plain", ds::Dataset)
+#     println(io, "Dataset from file: $(ds.index.grib_path)")
+#     show(io, mime, ds.dim)
+#     println(io, "Layers:")
+#     println(io, join(getlayersname(ds), ", "))
+#     println(io, "with attributes:")
+#     show(io, mime, ds.attrib)
+# end
 
 function dataset_attributes(index::FileIndex)
     attributes = Dict{String, Any}()

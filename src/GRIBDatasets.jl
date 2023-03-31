@@ -4,6 +4,8 @@ using Dates
 using GRIB
 using DataStructures
 using DiskArrays
+using CommonDataModel: AbstractDataset, AbstractVariable
+import CommonDataModel: path, name, dimnames, isopen, dim
 
 const DA = DiskArrays
 

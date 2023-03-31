@@ -18,9 +18,13 @@ end
 
 const Dimensions = Tuple{AbstractDim, Vararg{AbstractDim}}
 
+# Base.keys(dims::Dimensions) = [k for (k, v) in dims]
 Base.keys(dims::Dimensions) = [d.name for d in dims]
 Base.in(name::String, dims::Dimensions) = name in keys(dims)
 Base.getindex(dims::Dimensions, name::String) = _get_dim(dims, name).length
+# Base.iterate(dims::Dimensions) = iterate(map(dim -> dim.name => dim.length, dims))
+# Base.iterate(dims::Dimensions, i::Int64) = iterate(map(dim -> dim.name => dim.length, dims), i)
+Base.pairs(dims::Dimensions) = map(dim -> dim.name => dim.length, dims)
 
 function _horizontaltype(index::FileIndex)::Type{<:Horizontal}
     grid_type = getone(index, "gridType")
@@ -71,6 +75,7 @@ function _horizdim(index::FileIndex, ::Type{NoCoords})
 end
 
 _size_dims(dims) = Tuple([d.length for d in dims])
+# _size_dims(dims) = Tuple([v for (k, v) in dims])
 
 function _get_dim(dims, name)::Dimension 
     fdim = dims[keys(dims) .== name]
@@ -111,4 +116,7 @@ function Base.show(io::IO, mime::MIME"text/plain", dims::Dimensions)
     for dim in dims
         println(io, "\t $(dim.name) = $(dim.length)")
     end
+    # for (k, v) in dims
+    #     println(io, "\t $(k) = $(v)")
+    # end
 end
