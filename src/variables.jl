@@ -170,10 +170,9 @@ function dim_attributes(dim)
     attributes
 end
 
-# function Base.show(io::IO, mime::MIME"text/plain", var::Variable)
-#     println(io, "Variable `$(var.name)` with dims:")
-#     show(io, mime, var.dim)
-# end
+# Shifts the responsibility of showing the variable in the REPL to CommonDataModel
+Base.show(io::IO, mime::MIME"text/plain", var::Variable) = show(io, var)
+
 
 # function Base.show(io::IO, var::Variable)
 #     show(io, var.values)
