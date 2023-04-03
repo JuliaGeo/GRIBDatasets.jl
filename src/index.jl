@@ -16,10 +16,11 @@ end
 getheaders(index::FileIndex) = index.unique_headers
 
 """
-    FileIndex(grib_path::String; index_keys = ALL_KEYS)
+    FileIndex(grib_path::String; index_keys = ALL_KEYS, filter_by_values = Dict())
 
 Construct a [`FileIndex`](@ref) for the file `grib_path`, storing only the keys in `index_keys`.
-The values of the headers can be accessed with `getindex`
+It is possible to read only specific values by specifying them in `filter_by_values`.
+The values of the headers can be accessed with `getindex`.
 
 # Example
 
@@ -52,14 +53,22 @@ Dict{AbstractString, Vector{Any}} with 39 entries:
   ⋮                                  => ⋮
 ```
 """
-function FileIndex(grib_path::String; index_keys = ALL_KEYS)
+function FileIndex(grib_path::String; index_keys = ALL_KEYS, filter_by_values = Dict())
     messages = MessageIndex[]
     datatype = nothing
     fdata = []
     unique_headers = DefaultDict{AbstractString, Vector{Any}}(() -> Vector{Any}())
 
-    # f = GribFile(grib_path)
-    GribFile(grib_path) do f
+    f = if isempty(filter_by_values)
+        GribFile(grib_path)
+    else
+        ind = Index(grib_path, keys(filter_by_values)...)
+        for (k, v) in filter_by_values
+            select!(ind, k, v)
+        end
+        ind
+    end
+    try
         for (i, m) in enumerate(f)
             # Infer the data type from the values of the first message
             if i==1
@@ -70,9 +79,11 @@ function FileIndex(grib_path::String; index_keys = ALL_KEYS)
             _add_headers!(unique_headers, mindex)
             push!(messages, mindex)
         end
+    catch
+        rethrow()
+    finally
+        destroy(f)
     end
-    # destroy(f)
-    # _filter_missing!(unique_headers)
     FileIndex{datatype}(grib_path, messages, unique_headers, fdata)
 end
 

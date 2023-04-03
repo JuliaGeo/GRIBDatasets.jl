@@ -15,6 +15,20 @@ using GRIBDatasets: FileIndex, filter_messages, with_messages, enforce_unique_at
     @test length(index) == 160
 end
 
+@testset "filtering upfront" begin
+    grib_path = joinpath(dir_testfiles, "era5-levels-members.grib")
+    filter_by_values = Dict(
+        "cfVarName" => "z",
+        "level" => 500,
+    )
+
+    index = FileIndex(grib_path; filter_by_values)
+
+    @test GDS.getone(index, "shortName") == "z"
+
+    @test length(index) == 40
+end
+
 @testset "filtering index" begin
     grib_path = joinpath(dir_testfiles, "era5-levels-members.grib")
     index = FileIndex(grib_path)

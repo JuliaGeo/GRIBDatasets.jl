@@ -22,7 +22,10 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "Internals" => "internals.md",
+        "Internals" => Any[
+            "internals.md",
+            "FileIndex" => "file_index.md"
+        ],
     ],
 )
 

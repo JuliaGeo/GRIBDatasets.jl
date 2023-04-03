@@ -1,4 +1,5 @@
 [deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 GRIB = "b16dfd50-4035-11e9-28d4-9dfe17e6779b"
 GRIBDatasets = "82be9cdb-ee19-4151-bdb3-b400788d9abc"
