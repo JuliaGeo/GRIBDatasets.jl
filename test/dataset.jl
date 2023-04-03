@@ -38,6 +38,13 @@ using GRIBDatasets: DATA_ATTRIBUTES_KEYS, GRID_TYPE_MAP
         @test layer[5:10, 2:4, 1:3, 1:2, 1:2] isa AbstractArray{<:Any, 5}
     end
 
+    @testset "upfront filtering" begin
+        only_first_member = Dict("number" => 1)
+
+        ds = GRIBDataset(grib_path; filter_by_values = only_first_member)
+        length(ds["number"]) == 1
+    end
+
     @testset "variable attributes" begin
         layer = ds[varstring]
 

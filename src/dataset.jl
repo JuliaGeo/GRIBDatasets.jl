@@ -76,7 +76,7 @@ function GRIBDataset(index::FileIndex)
     GRIBDataset(index, _alldims(index), dataset_attributes(index)) 
 end
 
-GRIBDataset(filepath::AbstractString) = GRIBDataset(FileIndex(filepath))
+GRIBDataset(filepath::AbstractString; filter_by_values = Dict()) = GRIBDataset(FileIndex(filepath; filter_by_values))
 
 Base.keys(ds::Dataset) = getvars(ds)
 Base.haskey(ds::Dataset, key) = key in keys(ds)
