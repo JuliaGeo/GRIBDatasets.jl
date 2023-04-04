@@ -1,5 +1,5 @@
 using GRIBDatasets
-using GRIBDatasets: _alldims, _horizontaltype, _horizdim, _dim_values, _size_dims
+using GRIBDatasets: _alldims, _horizontaltype, _horizdim, _dim_values, _size_dims, _otherdims
 using GRIBDatasets: Horizontal, Vertical, Other, NonHorizontal
 using GRIBDatasets: Lonlat, NonDimensionCoords, NoCoords
 using GRIBDatasets: Dimension, Dimensions
@@ -22,7 +22,8 @@ using GRIBDatasets: Dimension, Dimensions
     @test erahoriz[1] isa Dimension{Horizontal}
     @test erahoriz[1].name == "longitude"
 
-
+    eraother = _otherdims(era5)
+    @test eraother[1] isa Dimension{<:Other}
     
     era_alldims = _alldims(era5)
     @test era_alldims isa Dimensions

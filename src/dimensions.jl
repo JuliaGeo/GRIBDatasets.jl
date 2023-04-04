@@ -38,7 +38,7 @@ function _alldims(index::FileIndex)
     NTuple{length(dims), Dimension}(dims)
 end
 
-function _otherdims(index::FileIndex; coord_keys = vcat(keys(COORD_ATTRS) |> collect, "typeOfLevel"))
+function _otherdims(index::FileIndex; coord_keys = COORDINATE_VARIABLES_KEYS)
     dims = Dimension[]
     for key in coord_keys
         # For the moment, we only consider `valid_time` key for time dimension.

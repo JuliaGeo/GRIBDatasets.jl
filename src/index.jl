@@ -138,7 +138,7 @@ function with_messages(f::Function, index::FileIndex, args...; kwargs...)
     end
 end
 
-enforce_unique_attributes(index::FileIndex, attribute_keys) = enforce_unique_attributes(getheaders(index), attribute_keys)
+# enforce_unique_attributes(index::FileIndex, attribute_keys) = enforce_unique_attributes(getheaders(index), attribute_keys)
 
 function get_messages_length(index::FileIndex)
     [length(m) for m in index.messages]

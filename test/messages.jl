@@ -20,3 +20,9 @@ using GRIB
 
     destroy(f)
 end
+
+# f = GribFile(grib_path)
+
+# wanted = collect(Iterators.filter(grib) do msg
+#     msg["typeOfLevel"] == "hybrid"
+# end)

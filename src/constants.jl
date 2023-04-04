@@ -248,3 +248,5 @@ const GRID_TYPES_2D_NON_DIMENSION_COORDS = [
     "albers",
     "polar_stereographic",
 ]
+
+const COORDINATE_VARIABLES_KEYS = vcat(keys(COORD_ATTRS) |> collect, "typeOfLevel")

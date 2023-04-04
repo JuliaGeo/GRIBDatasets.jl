@@ -1,7 +1,9 @@
 using GRIBDatasets
+using Dates
 using Test
 using GRIBDatasets: getone
 using GRIBDatasets: DATA_ATTRIBUTES_KEYS, GRID_TYPE_MAP
+using GRIBDatasets: _to_datetime
 
 
 @testset "dataset and variables" begin
@@ -49,6 +51,12 @@ using GRIBDatasets: DATA_ATTRIBUTES_KEYS, GRID_TYPE_MAP
         layer = ds[varstring]
 
         @test layer.attrib["cfName"] == GDS.getone(GDS.filter_messages(index; shortName=varstring), "cfName")
+    end
+
+    @testset "utils" begin
+        todt = _to_datetime.(ds["valid_time"])
+        @test todt[1] == DateTime("2017-01-01T00:00:00")
+        @test length(todt) == 4
     end
 end
 
