@@ -120,10 +120,12 @@ struct Variable{T, N, AT <: Union{Array{T, N}, DA.AbstractDiskArray{T, N}}} <: A
     attrib::Dict{String, Any}
 end
 Base.parent(var::Variable) = var.values
-Base.size(var::Variable) = _size_dims(var.dim)
+Base.size(var::Variable) = _size_dims(var.dims)
 Base.getindex(var::Variable, I...) = getindex(parent(var), I...)
 name(var::Variable) = var.name
-dimnames(var::Variable) = keys(var.dim)
+CDM.dim(var::Variable, dimname::String) = dimlength(var.dims[dimname])
+
+_get_dim(var::Variable, key::String) = _get_dim(var.dims, key)
 
 function Variable(ds::GRIBDataset, key)
     dsdims = ds.dims

@@ -20,13 +20,13 @@ using GRIBDatasets: DiskValues, Variable
     
         @test GDS.getlayersname(ds)[1] == "z"
     
-        @test length(ds.dim) == 5
+        @test length(ds.dims) == 5
     
         @test ds.attrib["centre"] == getone(index, "centre")
     end
 
     @testset "dim as variable" begin
-        dimvar = ds["longitude"]
+        dimvar = ds["lon"]
         @test dimvar isa Variable
         @test collect(dimvar) isa AbstractArray
         @test dimvar[1:2] == [0., 3.]

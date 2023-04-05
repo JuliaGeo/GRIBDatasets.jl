@@ -48,12 +48,12 @@ end
 const Dimensions = Tuple{AbstractDim, Vararg{AbstractDim}}
 
 # Base.keys(dims::Dimensions) = [k for (k, v) in dims]
-Base.keys(dims::Dimensions) = [d.name for d in dims]
+Base.keys(dims::Dimensions) = [dimname(dim) for dim in dims]
 Base.in(name::String, dims::Dimensions) = name in keys(dims)
-Base.getindex(dims::Dimensions, name::String) = _get_dim(dims, name).length
+Base.getindex(dims::Dimensions, name::String)::AbstractDim = _get_dim(dims, name)
 # Base.iterate(dims::Dimensions) = iterate(map(dim -> dim.name => dim.length, dims))
 # Base.iterate(dims::Dimensions, i::Int64) = iterate(map(dim -> dim.name => dim.length, dims), i)
-Base.pairs(dims::Dimensions) = map(dim -> dim.name => dim.length, dims)
+Base.pairs(dims::Dimensions) = map(dim -> dimname(dim) => dimlength(dim), dims)
 
 dimname(dim::AbstractDim) = dim.name
 
@@ -139,6 +139,12 @@ function _horizdim(index::FileIndex, ::Type{NoCoords})
 end
 
 _size_dims(dims) = Tuple([dimlength(d) for d in dims])
+
+function _get_dim(dims, name)::AbstractDim 
+    fdim = dims[keys(dims) .== name]
+    fdim == () && throw(KeyError(name))
+    return first(fdim)
+end
 
 function _dim_values(index::FileIndex, dim::MessageDimension{<:NonHorizontal})
     vals = index[dim.name]
@@ -231,13 +237,5 @@ end
 Find at which indices in `dims` correspond each GRIB message in `index`.
 """
 messages_indices(index::FileIndex, dims::Dimensions) = [message_indices(index, mind, dims) for mind in index.messages]
-
-Base.show(io::IO, mime::MIME"text/plain", dim::MessageDimension) = print(io, "$(dim.name) = $(dimlength(dim))")
-function Base.show(io::IO, mime::MIME"text/plain", dims::Dimensions) 
-    println(io, "Dimensions:")
-    for dim in dims
-        println(io, "\t $(dim.name) = $(dimlength(dim))")
-    end
-end
 
 Base.show(io::IO, mime::MIME"text/plain", dims::Dimensions) = show_dim(io, pairs(dims))

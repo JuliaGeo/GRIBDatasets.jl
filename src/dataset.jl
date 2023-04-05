@@ -82,16 +82,16 @@ Base.keys(ds::Dataset) = getvars(ds)
 Base.haskey(ds::Dataset, key) = key in keys(ds)
 Base.getindex(ds::Dataset, key) = Variable(ds, string(key))
 
-path(ds::GRIBDataset) = ds.index.grib_path
-dim(ds::GRIBDataset) = Dict(pairs(ds.dim))
-
 getlayersid(ds::GRIBDataset) = ds.index["paramId"]
 getlayersname(ds::GRIBDataset) = string.(ds.index["cfVarName"])
 
-getvars(ds::GRIBDataset) = vcat(keys(ds.dim), getlayersname(ds))
+getvars(ds::GRIBDataset) = vcat(keys(ds.dims), getlayersname(ds))
 
 _dim_values(ds::GRIBDataset, dim) = _dim_values(ds.index, dim)
-_get_dim(ds::GRIBDataset, key) = _get_dim(ds.dim, key)
+_get_dim(ds::GRIBDataset, key) = _get_dim(ds.dims, key)
+
+path(ds::GRIBDataset) = ds.index.grib_path
+CDM.dim(ds::GRIBDataset, dimname::String) = dimlength(ds.dims[dimname])
 # _dim_values(ds::GRIBDataset, dim::Dimension{Horizontal}) = _dim_values(ds.index, dim)
 
 
