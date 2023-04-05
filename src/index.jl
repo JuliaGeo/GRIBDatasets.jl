@@ -16,10 +16,11 @@ end
 getheaders(index::FileIndex) = index.unique_headers
 
 """
-    FileIndex(grib_path::String; index_keys = ALL_KEYS)
+    FileIndex(grib_path::String; index_keys = ALL_KEYS, filter_by_values = Dict())
 
 Construct a [`FileIndex`](@ref) for the file `grib_path`, storing only the keys in `index_keys`.
-The values of the headers can be accessed with `getindex`
+It is possible to read only specific values by specifying them in `filter_by_values`.
+The values of the headers can be accessed with `getindex`.
 
 # Example
 
@@ -52,14 +53,22 @@ Dict{AbstractString, Vector{Any}} with 39 entries:
   ⋮                                  => ⋮
 ```
 """
-function FileIndex(grib_path::String; index_keys = ALL_KEYS)
+function FileIndex(grib_path::String; index_keys = ALL_KEYS, filter_by_values = Dict())
     messages = MessageIndex[]
     datatype = nothing
     fdata = []
     unique_headers = DefaultDict{AbstractString, Vector{Any}}(() -> Vector{Any}())
 
-    # f = GribFile(grib_path)
-    GribFile(grib_path) do f
+    f = if isempty(filter_by_values)
+        GribFile(grib_path)
+    else
+        ind = Index(grib_path, keys(filter_by_values)...)
+        for (k, v) in filter_by_values
+            select!(ind, k, v)
+        end
+        ind
+    end
+    try
         for (i, m) in enumerate(f)
             # Infer the data type from the values of the first message
             if i==1
@@ -70,9 +79,11 @@ function FileIndex(grib_path::String; index_keys = ALL_KEYS)
             _add_headers!(unique_headers, mindex)
             push!(messages, mindex)
         end
+    catch
+        rethrow()
+    finally
+        destroy(f)
     end
-    # destroy(f)
-    # _filter_missing!(unique_headers)
     FileIndex{datatype}(grib_path, messages, unique_headers, fdata)
 end
 
@@ -127,7 +138,7 @@ function with_messages(f::Function, index::FileIndex, args...; kwargs...)
     end
 end
 
-enforce_unique_attributes(index::FileIndex, attribute_keys) = enforce_unique_attributes(getheaders(index), attribute_keys)
+# enforce_unique_attributes(index::FileIndex, attribute_keys) = enforce_unique_attributes(getheaders(index), attribute_keys)
 
 function get_messages_length(index::FileIndex)
     [length(m) for m in index.messages]
@@ -157,3 +168,27 @@ end
 #         missing ∈ v && pop!(d, k)
 #     end
 # end
+
+"""
+    get_values_from_filtered(index, key, tocheck)
+For each `index` values in `key`, give the values in `tocheck` related with it.
+
+```jldoctest
+index = FileIndex(example_file)
+
+get_values_from_filtered(index, "cfVarName", "level")
+
+# output
+Dict{SubString{String}, Vector{Any}} with 2 entries:
+  "t" => [500, 850]
+  "z" => [500, 850]
+```
+"""
+function get_values_from_filtered(index, key, tocheck)
+    res = map(index[key]) do varname
+        kwargs = NamedTuple((Symbol(key) => varname,))
+        findex = filter_messages(index; kwargs...)
+        varname => findex[tocheck]
+    end
+    return Dict(res...)
+end

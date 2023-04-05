@@ -1,6 +1,7 @@
 using GRIBDatasets
 using GRIB
-using GRIBDatasets: FileIndex, filter_messages, with_messages, enforce_unique_attributes
+using GRIBDatasets: FileIndex, filter_messages, with_messages
+using GRIBDatasets: get_values_from_filtered
 
 
 @testset "index creation" begin
@@ -15,6 +16,20 @@ using GRIBDatasets: FileIndex, filter_messages, with_messages, enforce_unique_at
     @test length(index) == 160
 end
 
+@testset "filtering upfront" begin
+    grib_path = joinpath(dir_testfiles, "era5-levels-members.grib")
+    filter_by_values = Dict(
+        "cfVarName" => "z",
+        "level" => 500,
+    )
+
+    index = FileIndex(grib_path; filter_by_values)
+
+    @test GDS.getone(index, "shortName") == "z"
+
+    @test length(index) == 40
+end
+
 @testset "filtering index" begin
     grib_path = joinpath(dir_testfiles, "era5-levels-members.grib")
     index = FileIndex(grib_path)
@@ -26,6 +41,12 @@ end
     @test length(filter_messages(mindexs, shortName = "z", number = 1)) == 8
 end
 
+@testset "utils" begin
+    grib_path = joinpath(dir_testfiles, "era5-levels-members.grib")
+    index = FileIndex(grib_path)
+    vals = get_values_from_filtered(index, "cfVarName", "level")
+    @test length(vals) == 2
+end
 # with_messages(index; paramId = 129, level = 500) do m
 #     println(m["level"])
 # end

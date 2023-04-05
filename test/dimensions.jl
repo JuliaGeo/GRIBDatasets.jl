@@ -1,8 +1,14 @@
 using GRIBDatasets
-using GRIBDatasets: _alldims, _horizontaltype, _horizdim, _dim_values, _size_dims, _get_dim
+using GRIBDatasets: _alldims, _horizontaltype, _horizdim, _dim_values, _size_dims, _otherdims, _verticaldims
+using GRIBDatasets: _separate_distinct_levels, _get_dim
 using GRIBDatasets: Horizontal, Vertical, Other, NonHorizontal
 using GRIBDatasets: Lonlat, NonDimensionCoords, NoCoords
-using GRIBDatasets: Dimension, Dimensions
+using GRIBDatasets: MessageDimension, IndexedDimension, ArtificialDimension, Dimensions, AbstractDim
+using GRIBDatasets: dimlength, dimname
+using GRIBDatasets: filter_messages, message_indices, message_indice, messages_indices
+using GRIBDatasets: _get_verticaldims, _get_horizontaldims, _get_otherdims
+using GRIBDatasets: _is_in_artificial
+using Test
 
 @testset "dimension from index" begin
     era5_path = joinpath(dir_testfiles, "era5-levels-members.grib")
@@ -19,15 +25,19 @@ using GRIBDatasets: Dimension, Dimensions
     @test _horizontaltype(lambert) == NonDimensionCoords
 
     erahoriz = _horizdim(era5, _horizontaltype(era5))
-    @test erahoriz[1] isa Dimension{Horizontal}
-    @test erahoriz[1].name == "longitude"
+    @test erahoriz[1] isa MessageDimension{Horizontal}
+    @test dimname(erahoriz[1]) == "lon"
 
-
+    eraother = _otherdims(era5)
+    @test eraother[1] isa IndexedDimension
     
+    eravertical = _verticaldims(era5)
+    @test eravertical[1].name == "isobaricInhPa"
+
     era_alldims = _alldims(era5)
     @test era_alldims isa Dimensions
 
-    @test _get_dim(era_alldims, "longitude") == Dimension{Horizontal}("longitude", 120)
+    @test dimname.(_get_verticaldims(era_alldims)) == dimname.(eravertical)
 
     # for lonlat grid, x dim must be one dimensional
     @test _dim_values(era5, era_alldims[1]) isa Vector
@@ -36,10 +46,33 @@ using GRIBDatasets: Dimension, Dimensions
     @test _dim_values(lambert, lam_alldims[1]) isa Matrix
 
     # first dimensions must be the horizontal ones
-    @test keys(era_alldims)[1:2] == ["longitude", "latitude"]
+    @test keys(era_alldims)[1:2] == ["lon", "lat"]
 
-    vertdim_length = era_alldims["level"]
-    @test vertdim_length == 2
+    @test _size_dims(era_alldims) == (120, 61, 2, 10, 4)
 
-    @test _size_dims(era_alldims) == (120, 61, 10, 4, 2)
+    @testset "message indices" begin
+        dim = era_alldims[1]
+        mind = era5.messages[1]
+        vertdim = _get_verticaldims(era_alldims)[1]
+        @test message_indices(era5, mind, era_alldims) == [1, 1, 1]
+
+        indices = messages_indices(era5, era_alldims)
+        length(unique([e[2] for e in indices])) == 10
+    end
+
+    @testset "redundant vertical dims" begin
+        index = FileIndex(joinpath(dir_testfiles, "ENH18080914"))
+        filtered_index = filter_messages(index, typeOfLevel = "heightAboveGround")
+        distinct = _separate_distinct_levels(filtered_index; tocheck = "level")
+        @test length(distinct) == 2
+
+        vertdims = _verticaldims(index)
+
+        @test keys(vertdims) == ["hybrid", "heightAboveGround", "heightAboveGround_2"]
+
+        u10 = filter_messages(index, cfVarName = "u10")
+        indices = messages_indices(u10, _alldims(u10))
+
+        @test indices[1] == [1, 1]
+    end
 end

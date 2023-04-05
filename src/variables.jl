@@ -37,10 +37,8 @@ Create a `DiskValues` object from matching the GRIB messages headers in `layer_i
 the dimensions values in `dims`.
 """
 function DiskValues(ds::GRIBDataset, layer_index::FileIndex{T}, dims::Dimensions) where T
-    otherdims = Tuple([dim for dim in dims if dim isa Dimension{<:NonHorizontal}])
-    horizdims = Tuple([dim for dim in dims if dim isa Dimension{<:Horizontal}])
-    # otherdims = _otherdims(layer_index)
-    # horizdims = _horizdim(layer_index, _horizontaltype(layer_index))
+    messagedims = Tuple([dim for dim in dims if dim isa MessageDimension])
+    otherdims = Tuple([dim for dim in dims if !(dim isa MessageDimension)])
     N = length(dims)
     M = length(otherdims)
     offsets_array = Array{Int, M}(undef, _size_dims(otherdims))
@@ -49,7 +47,7 @@ function DiskValues(ds::GRIBDataset, layer_index::FileIndex{T}, dims::Dimensions
     for (mind, indices) in zip(layer_index.messages, all_indices)
         offsets_array[indices...] = getoffset(mind)
     end
-    DiskValues{T, N, M}(ds, layer_index, offsets_array, horizdims, otherdims)
+    DiskValues{T, N, M}(ds, layer_index, offsets_array, messagedims, otherdims)
 end
 
 Base.size(dv::DiskValues) = (_size_dims(dv.message_dims)..., _size_dims(dv.other_dims)...)
@@ -92,23 +90,23 @@ end
 DA.eachchunk(A::DiskValues) = DA.GridChunks(A, size(A))
 DA.haschunks(A::DiskValues) = DA.Unchunked()
 
-function message_indices(index::FileIndex, mind::MessageIndex, dims::Dimensions)
-    indices = Int[]
-    for dim in dims
-        if dim isa Dimension{<:NonHorizontal}
-            vals = _dim_values(index, dim)
-            ind = findfirst(x -> x == mind[dim.name], vals)
-            push!(indices, ind)
-        end
-    end
-    indices
-end
+# function message_indices(index::FileIndex, mind::MessageIndex, dims::Dimensions)
+#     indices = Int[]
+#     for dim in dims
+#         if dim isa MessageDimension{<:NonHorizontal}
+#             vals = _dim_values(index, dim)
+#             ind = findfirst(x -> x == mind[dim.name], vals)
+#             push!(indices, ind)
+#         end
+#     end
+#     indices
+# end
 
-"""
-    message_indices(index::FileIndex, mind::MessageIndex, dims::Dimensions)
-Find at which indices in `dims` correspond each GRIB message in `index`.
-"""
-messages_indices(index::FileIndex, dims::Dimensions) = [message_indices(index, mind, dims) for mind in index.messages]
+# """
+#     message_indices(index::FileIndex, mind::MessageIndex, dims::Dimensions)
+# Find at which indices in `dims` correspond each GRIB message in `index`.
+# """
+# messages_indices(index::FileIndex, dims::Dimensions) = [message_indices(index, mind, dims) for mind in index.messages]
 
 """
     Variable <: AbstractArray
@@ -117,7 +115,7 @@ Variable of a dataset `ds`. It can be a layer or a dimension. In case of a layer
 struct Variable{T, N, AT <: Union{Array{T, N}, DA.AbstractDiskArray{T, N}}} <: AbstractVariable{T,N}
     ds::GRIBDataset
     name::String
-    dim::NTuple{N, Dimension}
+    dims::NTuple{N, AbstractDim}
     values::AT
     attrib::Dict{String, Any}
 end
@@ -128,12 +126,22 @@ name(var::Variable) = var.name
 dimnames(var::Variable) = keys(var.dim)
 
 function Variable(ds::GRIBDataset, key)
-    if key in ds.dim
-        dim = _get_dim(ds, key)
+    dsdims = ds.dims
+    if key in dsdims
+        dim = dsdims[key]
+        # dim = _get_dim(ds, key)
         Variable(ds, dim)
     elseif key in getlayersname(ds)
         layer_index = filter_messages(ds.index, cfVarName = key)
         dims = _alldims(layer_index)
+
+        # A little bit tricky... If the variable is related to an artificial dimension,
+        # we identify the dimension and replace it in the reconstructed `dims`.
+        if any(_is_in_artificial.(key, dsdims))
+            artdim = filter(x -> _is_in_artificial(key, x), dsdims)
+            length(artdim) > 1 && error("More than one artificial for this variable. Not supported.")
+            dims = _replace_with_artificial(artdim[1], dims)
+        end
         dv = DiskValues(ds, layer_index, dims)
         attributes = layer_attributes(layer_index)
         Variable(ds, string(key), dims, dv, attributes)
@@ -142,7 +150,7 @@ function Variable(ds::GRIBDataset, key)
     end
 end
 
-function Variable(ds::GRIBDataset, dim::Dimension) 
+function Variable(ds::GRIBDataset, dim::AbstractDim) 
     vals = _dim_values(ds, dim)
     attributes = dim_attributes(dim)
     Variable(ds, dim.name, (dim,), vals, attributes)

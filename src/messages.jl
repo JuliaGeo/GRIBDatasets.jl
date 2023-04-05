@@ -1,10 +1,7 @@
 """
-    $(typeof(GRIB_STEP_UNITS_TO_SECONDS))
+    const GRIB_STEP_UNITS_TO_SECONDS
 
-Array used to convert the grib step units to seconds. As Julia is 1-indexed,
-not 0 like Python, you should take care to correctly access the array,
-typically  just +1 to the step units before using it as an index.
-
+Array used to convert the grib step units to seconds. 
 Taken from eccodes `stepUnits.table`.
 """
 const GRIB_STEP_UNITS_TO_SECONDS = [
@@ -25,26 +22,12 @@ const GRIB_STEP_UNITS_TO_SECONDS = [
     900,
 ]
 
-_allkeys(m::GRIB.Message) = string.(m)
-"""
-    $(typeof(DEFAULT_EPOCH))
-
-Default epoch used for `from_` and `to_` methods, set to `$DEFAULT_EPOCH.`
-"""
-const DEFAULT_EPOCH = DateTime(1970, 1, 1, 0, 0)
 
 """
-Returns the integer seconds from epoch to the given date and time.
-
+    from_grib_date_time(date::Int, time::Int; epoch::DateTime=DEFAULT_EPOCH)
+Seconds from epoch to the given date and time.
 """
-function from_grib_date_time end
-
-""
-function from_grib_date_time(
-    date::Int,
-    time::Int;
-    epoch::DateTime=DEFAULT_EPOCH
-)::Int
+function from_grib_date_time(date::Int, time::Int; epoch::DateTime=DEFAULT_EPOCH)::Int
     hour = time ÷ 100
     minute = time % 100
     year = date ÷ 10000
@@ -56,16 +39,7 @@ function from_grib_date_time(
     return Dates.value(Dates.Second(data_datetime - epoch))
 end
 
-"""
-Pulls out the date and time from given keys and passes them to
-[`from_grib_date_time(::Int, ::Int)`](@ref from_grib_date_time(::Int, ::Int))
-"""
-function from_grib_date_time(
-    message::GRIB.Message;
-    date_key="dataDate",
-    time_key="dataTime",
-    epoch::DateTime=DEFAULT_EPOCH
-)::Union{Int,Missing}
+function from_grib_date_time(message::GRIB.Message; date_key="dataDate", time_key="dataTime", epoch::DateTime=DEFAULT_EPOCH)::Union{Int,Missing}
     if !haskey(message, date_key) || !haskey(message, time_key)
         return missing
     end
@@ -81,17 +55,10 @@ function to_grib_date_time(args...; kwargs...)
 end
 
 """
+    from_grib_step(message::GRIB.Message, step_key::String="endStep", step_unit_key::String="stepUnits")
 Returns the `step_key` value in hours.
-
-Uses [`GRIB_STEP_UNITS_TO_SECONDS`](@ref GRIB_STEP_UNITS_TO_SECONDS) to convert
-the step values to seconds, then divides by `3600.0` to get hours.
 """
-function from_grib_step(
-    message::GRIB.Message,
-    step_key::String="endStep",
-    step_unit_key::String="stepUnits"
-)::Float64
-    #  +1 as Julia is 1-indexed not 0
+function from_grib_step(message::GRIB.Message, step_key::String="endStep", step_unit_key::String="stepUnits")::Float64
     to_seconds = GRIB_STEP_UNITS_TO_SECONDS[message[step_unit_key] + 1]
     return message[step_key] * to_seconds / 3600.0
 end
@@ -101,14 +68,11 @@ function to_grib_step(args...; kwargs...)
 end
 
 """
+    from_grib_month
 Returns the integer seconds from the epoch to the verifying month value in the
 GRIB message.
 """
-function from_grib_month(
-    message::GRIB.Message,
-    verifying_month_key::String="verifyingMonth",
-    epoch::DateTime=DEFAULT_EPOCH
-)::Union{Int,Missing}
+function from_grib_month(message::GRIB.Message, verifying_month_key::String="verifyingMonth", epoch::DateTime=DEFAULT_EPOCH)::Union{Int,Missing}
     if !haskey(message, verifying_month_key)
         return missing
     end
@@ -132,9 +96,7 @@ julia> GDS.build_valid_time(10, 10)
 ((), 36010)
 ```
 """
-function build_valid_time(
-    time::Int, step::Int
-)::Tuple{Tuple{},Int64}
+function build_valid_time(time::Int, step::Int)::Tuple{Tuple{},Int64}
     step_s = step * 3600
 
     data = time + step_s
@@ -149,9 +111,7 @@ julia> GDS.build_valid_time([10], 10)
 (("time",), [36010])
 ```
 """
-function build_valid_time(
-    time::Array{Int,1}, step::Int
-)::Tuple{Tuple{String},Array{Int64,1}}
+function build_valid_time(time::Array{Int,1}, step::Int)::Tuple{Tuple{String},Array{Int64,1}}
     step_s = step * 3600
 
     data = time .+ step_s
@@ -166,9 +126,7 @@ julia> GDS.build_valid_time(1, [10])
 (("step",), [36001])
 ```
 """
-function build_valid_time(
-    time::Int, step::Array{Int,1}
-)::Tuple{Tuple{String},Array{Int64,1}}
+function build_valid_time(time::Int, step::Array{Int,1})::Tuple{Tuple{String},Array{Int64,1}}
     step_s = step * 3600
 
     data = time .+ step_s
@@ -188,12 +146,7 @@ julia> GDS.build_valid_time([10], [10])
 ((), 36010)
 ```
 """
-function build_valid_time(
-    time::Array{Int,1}, step::Array{Int,1}
-)::Union{
-    Tuple{Tuple{},Int64},
-    Tuple{Tuple{String,String},Array{Int64,2}}
-}
+function build_valid_time(time::Array{Int,1}, step::Array{Int,1})
     step_s = step * 3600
 
     if length(time) == 1 && length(step) == 1
@@ -238,16 +191,27 @@ julia> GDS.COMPUTED_KEYS["time"][1](20160501, 0)
 ```
 """
 COMPUTED_KEYS = Dict(
-    "time" => (from_grib_date_time, to_grib_date_time),
-    "valid_time" => (message -> from_grib_date_time(message, date_key="validityDate", time_key="validityTime"),
-        message -> to_grib_date_time(message, date_key="validityDate", time_key="validityTime"),),
-    "verifying_time" => (from_grib_month, m -> throw(ErrorException("Unimplemented"))),
-    "indexing_time" => (message -> from_grib_date_time(message, date_key="indexingDate", time_key="indexingTime"),
-        message -> to_grib_date_time(message, date_key="indexingDate", time_key="indexingTime"),),
+    "time" => (
+        from_grib_date_time, 
+        to_grib_date_time
+        ),
+    "valid_time" => (
+        message -> from_grib_date_time(message, date_key="validityDate", time_key="validityTime"),
+        message -> to_grib_date_time(message, date_key="validityDate", time_key="validityTime"),
+        ),
+    "verifying_time" => (
+        from_grib_month, 
+        m -> throw(ErrorException("Unimplemented"))
+        ),
+    "indexing_time" => (
+        message -> from_grib_date_time(message, date_key="indexingDate", time_key="indexingTime"),
+        message -> to_grib_date_time(message, date_key="indexingDate", time_key="indexingTime"),
+        ),
 )
 
 """
-Reads a specific key from a GRIB.jl message. Attempts to convert the raw value
+    read_message(message::GRIB.Message, key::String)
+Read a specific key from a GRIB.jl message. Attempts to convert the raw value
 associated with that key using the [`COMPUTED_KEYS`](@ref COMPUTED_KEYS) mapping
 to `from_grib_*` functions.
 """
@@ -271,7 +235,6 @@ end
     MessageIndex
 
 Stored information about a GRIB message. The keys can be accessed with `getindex`. The message offset and length are stored as property of the struct.
-
 """
 struct MessageIndex
     headers::Dict{String, Any}
@@ -307,6 +270,7 @@ getoffset(mindex::MessageIndex) = mindex.offset
 getheaders(mindex::MessageIndex) = mindex.headers
 Base.length(mindex::MessageIndex) = mindex.length
 Base.getindex(mindex::MessageIndex, args...) = getindex(getheaders(mindex), args...)
+Base.haskey(mindex::MessageIndex, key) = haskey(getheaders(mindex), key)
 
 Base.show(io::IO, mime::MIME"text/plain", mind::MessageIndex) = show(io, mime, getheaders(mind))
 
