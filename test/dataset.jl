@@ -4,6 +4,7 @@ using Test
 using GRIBDatasets: getone
 using GRIBDatasets: DATA_ATTRIBUTES_KEYS, GRID_TYPE_MAP
 using GRIBDatasets: _to_datetime
+using GRIBDatasets: DiskValues, Variable
 
 
 @testset "dataset and variables" begin
@@ -14,7 +15,7 @@ using GRIBDatasets: _to_datetime
     varstring = "z"
     @testset "dataset indexing" begin
         vars = keys(ds)
-        @test vars[1] == "longitude"
+        @test vars[1] == "lon"
     
         @test GDS.getlayersname(ds)[1] == "z"
     
@@ -34,10 +35,23 @@ using GRIBDatasets: _to_datetime
         @test layer[1:10, 2:4, 1, 1, 1] isa AbstractArray{<:Any, 2}
 
         #indexing on the other dimensions
-        @test layer[1, 1, 1:3, 1:2, 1:2] isa AbstractArray{<:Any, 3}
+        @test layer[1, 1, 1:2, 1:3, 1:2] isa AbstractArray{<:Any, 3}
 
         #indexing on the all dimensions
-        @test layer[5:10, 2:4, 1:3, 1:2, 1:2] isa AbstractArray{<:Any, 5}
+        @test layer[5:10, 2:4, 1:2, 1:3, 1:2] isa AbstractArray{<:Any, 5}
+    end
+
+    @testset "variable indexing with redundant level" begin
+        ds2 = GRIBDataset(joinpath(dir_testfiles, "ENH18080914"))
+
+        u = ds2["u"]
+        @test u[:,:, 1, 1] isa AbstractArray{<:Any, 2}
+
+        @test_throws BoundsError u[:,:,1,2]
+
+        u10 = ds2["u10"]
+
+        t2 = ds2["t2m"]
     end
 
     @testset "upfront filtering" begin
