@@ -168,3 +168,27 @@ end
 #         missing ∈ v && pop!(d, k)
 #     end
 # end
+
+"""
+    get_values_from_filtered(index, key, tocheck)
+For each `index` values in `key`, give the values in `tocheck` related with it.
+
+```jldoctest
+index = FileIndex(example_file)
+
+get_values_from_filtered(index, "cfVarName", "level")
+
+# output
+Dict{SubString{String}, Vector{Any}} with 2 entries:
+  "t" => [500, 850]
+  "z" => [500, 850]
+```
+"""
+function get_values_from_filtered(index, key, tocheck)
+    res = map(index[key]) do varname
+        kwargs = NamedTuple((Symbol(key) => varname,))
+        findex = filter_messages(index; kwargs...)
+        varname => findex[tocheck]
+    end
+    return Dict(res...)
+end

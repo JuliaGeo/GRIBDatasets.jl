@@ -270,6 +270,7 @@ getoffset(mindex::MessageIndex) = mindex.offset
 getheaders(mindex::MessageIndex) = mindex.headers
 Base.length(mindex::MessageIndex) = mindex.length
 Base.getindex(mindex::MessageIndex, args...) = getindex(getheaders(mindex), args...)
+Base.haskey(mindex::MessageIndex, key) = haskey(getheaders(mindex), key)
 
 Base.show(io::IO, mime::MIME"text/plain", mind::MessageIndex) = show(io, mime, getheaders(mind))
 

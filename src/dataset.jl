@@ -66,7 +66,7 @@ julia> z[1:4, 3:6, 1, 1:2, 1]
 """
 struct GRIBDataset{T, N}
     index::FileIndex{T}
-    dims::NTuple{N, Dimension}
+    dims::NTuple{N, AbstractDim}
     attrib::Dict{String, Any}
 end
 

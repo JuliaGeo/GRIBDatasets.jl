@@ -180,6 +180,7 @@ const COORD_ATTRS = Dict(
         "positive"         => "up",
         "long_name"        => "height above the surface",
         "standard_name"    => "height",
+        "axis"             => "Z"
     ),
     "isobaricInhPa"        => Dict(
         "units"            => "hPa",
@@ -187,6 +188,7 @@ const COORD_ATTRS = Dict(
         "stored_direction" => "decreasing",
         "standard_name"    => "air_pressure",
         "long_name"        => "pressure",
+        "axis"             => "Z",
     ),
     "isobaricInPa"         => Dict(
         "units"            => "Pa",
@@ -194,6 +196,7 @@ const COORD_ATTRS = Dict(
         "stored_direction" => "decreasing",
         "standard_name"    => "air_pressure",
         "long_name"        => "pressure",
+        "axis"             => "Z",
     ),
     "isobaricLayer"        => Dict(
         "units"            => "Pa",
@@ -249,4 +252,20 @@ const GRID_TYPES_2D_NON_DIMENSION_COORDS = [
     "polar_stereographic",
 ]
 
-const COORDINATE_VARIABLES_KEYS = vcat(keys(COORD_ATTRS) |> collect, "typeOfLevel")
+const COORDINATE_VARIABLES_KEYS = vcat(keys(COORD_ATTRS) |> collect)
+
+# """
+#     GRIB_KEY_TO_DIMNAMES_MAP
+# Maps the GRIB keys to the name the variable will have in the GRIBDataset.
+# This follows (as much as possible) the names used when converting GRIB files
+# to netCDF with the `cdo` software (https://code.mpimet.mpg.de/projects/cdo/).
+# """
+# const GRIB_KEY_TO_DIMNAMES_MAP = Dict(
+#     "longitude"         => "lon",
+#     "latitude"          => "lat",
+#     "heightAboveGround" => "height",
+#     "hybrid"            => "lev",
+#     "isobaricInhPa"     => "plev",
+#     "isobaricInPa"      => "plev",
+#     "valid_time"        => "time"
+# )
