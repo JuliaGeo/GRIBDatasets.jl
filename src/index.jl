@@ -112,6 +112,7 @@ function getone(index::FileIndex, key::AbstractString)
     length(val) !== 1 ? error("Expected 1 value for $key, found $(length(val)) instead") : first(val)
 end
 
+missing_value(index::FileIndex) = getone(index, "missingValue")
 """
     filter_messages(index::FileIndex{T}, args...; kwargs...)
 Filter the messages in the `index` and return a new updated index. The filtering keys must be expressed as keyword arguments pair.

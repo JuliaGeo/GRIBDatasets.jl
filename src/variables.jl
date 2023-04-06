@@ -1,3 +1,5 @@
+abstract type AbstractGRIBVariable{T, N} <: AbstractVariable{T, N} end
+
 """
     DiskValues{T, N, M} <: DA.AbstractDiskArray{T, N}
 Object that maps the dimensions lookup to GRIB messages offsets.
@@ -20,7 +22,7 @@ Dimensions:
          latitude = 61
 ```
 """
-struct DiskValues{T, N, M} <: DA.AbstractDiskArray{Union{Missing, T}, N}
+struct DiskValues{T, N, M} <: DA.AbstractDiskArray{T, N}
     "Reference to the dataset"
     ds::GRIBDataset
     "FileIndex filtered according to the current variable"
@@ -81,7 +83,8 @@ function DA.readblock!(A::DiskValues, aout, i::AbstractUnitRange...)
             seek(file, message_index)
             message = Message(file)
             values = message["values"][message_dim_inds...]
-            aout[rebased_message_dim..., Tuple(Ir)...] = replace(values, missing_value => missing)
+            # aout[rebased_message_dim..., Tuple(Ir)...] = replace(values, missing_value => missing)
+            aout[rebased_message_dim..., Tuple(Ir)...] = values
         end
     # end
     destroy(file)
@@ -112,7 +115,7 @@ DA.haschunks(A::DiskValues) = DA.Unchunked()
     Variable <: AbstractArray
 Variable of a dataset `ds`. It can be a layer or a dimension. In case of a layer, the values are lazily loaded when it's sliced.
 """
-struct Variable{T, N, AT <: Union{Array{T, N}, DA.AbstractDiskArray{T, N}}} <: AbstractVariable{T,N}
+struct Variable{T, N, AT <: Union{Array{T, N}, DA.AbstractDiskArray{T, N}}} <: AbstractGRIBVariable{T,N}
     ds::GRIBDataset
     name::String
     dims::NTuple{N, AbstractDim}
@@ -120,16 +123,21 @@ struct Variable{T, N, AT <: Union{Array{T, N}, DA.AbstractDiskArray{T, N}}} <: A
     attrib::Dict{String, Any}
 end
 Base.parent(var::Variable) = var.values
-Base.size(var::Variable) = _size_dims(var.dims)
+Base.size(var::Variable) = _size_dims(var.dims)  
 Base.getindex(var::Variable, I...) = getindex(parent(var), I...)
 
-### Implementation of CommonDataModel
-name(var::Variable) = var.name
-CDM.dim(var::Variable, dimname::String) = dimlength(var.dims[dimname])
-dimnames(var::Variable) = keys(var.dims)
+ndims(::AbstractGRIBVariable{T,N}) where {T,N} = N
+varname(var::Variable) = var.name
+dims(var::Variable) = var.dims
 
-attribnames(var::Variable) = keys(var.attrib)
-attrib(var::Variable, attribname::String) = var.attrib[attribname]
+missing_value(var::Variable) = parent(var) isa DiskValues ? missing_value(parent(var).layer_index) : nothing
+### Implementation of CommonDataModel
+name(var::AbstractGRIBVariable) = varname(var)
+CDM.dim(var::AbstractGRIBVariable, dimname::String) = dimlength(_get_dim(var, dimname))
+dimnames(var::AbstractGRIBVariable) = keys(dims(var))
+
+attribnames(var::AbstractGRIBVariable) = keys(var.attrib)
+attrib(var::AbstractGRIBVariable, attribname::String) = var.attrib[attribname]
 
 
 _get_dim(var::Variable, key::String) = _get_dim(var.dims, key)
@@ -188,7 +196,7 @@ function dim_attributes(dim)
 end
 
 # Shifts the responsibility of showing the variable in the REPL to CommonDataModel
-Base.show(io::IO, mime::MIME"text/plain", var::Variable) = show(io, var)
+Base.show(io::IO, mime::MIME"text/plain", var::AbstractGRIBVariable) = show(io, var)
 
 
 # function Base.show(io::IO, var::Variable)

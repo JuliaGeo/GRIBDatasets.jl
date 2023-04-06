@@ -5,11 +5,13 @@ using GRIBDatasets: getone
 using GRIBDatasets: Variable
 using GRIBDatasets: DATA_ATTRIBUTES_KEYS, GRID_TYPE_MAP
 using GRIBDatasets: _to_datetime
-using GRIBDatasets: DiskValues, Variable
+using GRIBDatasets: DiskValues, Variable, CFVariable
 using GRIBDatasets: CDM
 
 @testset "dataset and variables" begin
     grib_path = joinpath(dir_testfiles, "era5-levels-members.grib")
+    dsmis = GRIBDataset(joinpath(dir_testfiles, "fields_with_missing_values.grib"))
+
     ds = GRIBDataset(grib_path)
     index = ds.index
 
@@ -39,21 +41,21 @@ using GRIBDatasets: CDM
     @testset "dim as variable" begin
 
         @testset "message dim" begin
-            dimvar = ds["lon"]
+            dimvar =  Variable(ds, "lon")
             @test dimvar isa Variable
             @test collect(dimvar) isa AbstractArray
             @test dimvar[1:2] == [0., 3.]
         end
 
         @testset "indexed dim" begin
-            dimvar = ds["number"]
+            dimvar = Variable(ds, "number")
             @test dimvar isa Variable
             @test collect(dimvar) isa AbstractArray
             @test dimvar[1:2] == [0, 1]
         end
 
         @testset "vertical dim" begin
-            dimvar = ds["isobaricInhPa"]
+            dimvar = Variable(ds, "isobaricInhPa")
             @test dimvar isa Variable
             @test collect(dimvar) isa AbstractArray
             @test dimvar[1:2] == [500, 850]
@@ -61,7 +63,9 @@ using GRIBDatasets: CDM
     end
 
     @testset "variable indexing" begin
-        layer = ds[varstring]
+        @test ds[varstring] isa CFVariable
+        
+        layer = Variable(ds, varstring)
         @test layer isa AbstractArray
         @test layer[:,:,1,1,1] isa AbstractMatrix
         lsize = size(layer)
@@ -75,6 +79,33 @@ using GRIBDatasets: CDM
 
         #indexing on the all dimensions
         @test layer[5:10, 2:4, 1:2, 1:3, 1:2] isa AbstractArray{<:Any, 5}
+
+        @testset "with missing values" begin
+            t2m = Variable(dsmis, "t2m")
+            misval = GDS.missing_value(t2m)
+            ht2m = t2m[:,:,1,1]
+            @test ht2m isa Matrix{Float64}
+            @test any(ht2m .== misval)
+        end
+
+        @testset "cfvariable and missing" begin
+            cfvar = CFVariable(ds, varstring)
+            cfvarmis = CFVariable(dsmis, "t2m")
+
+            A = cfvar[:,:,1,1,1]
+            Amis = cfvarmis[:,:,1,1]
+
+            @test eltype(A) == Float64
+            @test eltype(Amis) == Union{Missing, Float64}
+        end
+
+        @testset "cfvariable coordinate" begin
+            cflon = CFVariable(ds, "lon")
+            length(cflon[:]) == 120
+
+            cfnum = CFVariable(ds, "number")
+            length(cfnum[:]) == 10
+        end
     end
 
     @testset "variable indexing with redundant level" begin
