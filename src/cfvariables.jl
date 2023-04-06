@@ -15,7 +15,9 @@ function CFVariable(ds, varname; _v = Variable(ds, varname))
         missing_value = missing_val,
     )
 
-    CFVariable{T, N, typeof(parent(v)), typeof(storage_attrib)}(_v, _v.attrib, storage_attrib)
+    attribs = cflayer_attributes(v)
+
+    CFVariable{T, N, typeof(parent(v)), typeof(storage_attrib)}(_v, attribs, storage_attrib)
 end
 
 Base.parent(cfvar::CFVariable) = parent(cfvar.var)
@@ -38,3 +40,20 @@ dims(cfvar::CFVariable) = dims(cfvar.var)
 
 _get_dim(cfvar::CFVariable, dimname) = _get_dim(cfvar.var, dimname)
 
+# In case of layer variable
+cflayer_attributes(var::Variable{T, N, <: DA.AbstractDiskArray{T, N}}) where {T, N} = cflayer_attributes(parent(var).layer_index)
+
+# In case of a coordinate variable
+cflayer_attributes(var::Variable) = var.attrib
+
+function cflayer_attributes(index::FileIndex)
+    attributes = Dict{String, Any}()
+
+    for (gribkey, cfkey) in CF_MAP_ATTRIBUTES
+        if haskey(index, gribkey) && !occursin("unknown", getone(index, gribkey))
+            attributes[cfkey] = join(index[gribkey], ", ")
+        end
+    end
+
+    return attributes
+end

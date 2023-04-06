@@ -254,6 +254,11 @@ const GRID_TYPES_2D_NON_DIMENSION_COORDS = [
 
 const COORDINATE_VARIABLES_KEYS = vcat(keys(COORD_ATTRS) |> collect)
 
+const CF_MAP_ATTRIBUTES = Dict(
+    "cfName" => "standard_name",
+    "name" => "long_name",
+    "units" => "units"
+)
 # """
 #     GRIB_KEY_TO_DIMNAMES_MAP
 # Maps the GRIB keys to the name the variable will have in the GRIBDataset.

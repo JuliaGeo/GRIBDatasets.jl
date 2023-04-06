@@ -191,7 +191,7 @@ end
 
 function dim_attributes(dim)
     attributes = Dict{String, Any}()
-    merge!(attributes, copy(get(COORD_ATTRS, dim.name, Dict())))
+    merge!(attributes, copy(get(COORD_ATTRS, dimgribname(dim), Dict())))
     attributes
 end
 

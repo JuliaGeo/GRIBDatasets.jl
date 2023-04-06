@@ -18,6 +18,7 @@ dimensions.
 """
 struct MessageDimension{T} <: AbstractDim{T}
     name::String
+    gribname::String
     length::Int
 end
 
@@ -27,6 +28,7 @@ Dimension created from reading the index values with the keys in the `COORDINATE
 """
 struct IndexedDimension{T} <: AbstractDim{T}
     name::String
+    gribname::String
     values::Vector{Any}
 end
 
@@ -56,6 +58,7 @@ Base.getindex(dims::Dimensions, name::String)::AbstractDim = _get_dim(dims, name
 Base.pairs(dims::Dimensions) = map(dim -> dimname(dim) => dimlength(dim), dims)
 
 dimname(dim::AbstractDim) = dim.name
+dimgribname(dim::AbstractDim) = dim.gribname
 
 dimlength(dim::AbstractDim) = dim.length
 dimlength(dim::Union{IndexedDimension, ArtificialDimension}) = length(dim.values)
@@ -102,7 +105,7 @@ function _otherdims(index::FileIndex; coord_keys = COORDINATE_VARIABLES_KEYS)
     Tuple(dims)
 end
 
-_build_otherdims(key, headers) = IndexedDimension{Other}(key, headers[key])
+_build_otherdims(key, headers) = IndexedDimension{Other}(key, key, headers[key])
 
 _verticaldims(index) = Tuple(_build_verticaldims(index))
 
@@ -127,7 +130,7 @@ function _build_verticaldims(index)
 
             end
         else
-            dim = IndexedDimension{Vertical}(dimname, filtered_index["level"])
+            dim = IndexedDimension{Vertical}(dimname, dimname, filtered_index["level"])
             push!(dims, dim)
         end
     end
@@ -135,19 +138,19 @@ function _build_verticaldims(index)
 end
 
 function _horizdim(index::FileIndex, ::Type{Lonlat})
-    Tuple(MessageDimension{Horizontal}.(["lon", "lat"], [getone(index, "Nx"), getone(index, "Ny")]))
+    Tuple(MessageDimension{Horizontal}.(["lon", "lat"], ["longitude", "latitude"],[getone(index, "Nx"), getone(index, "Ny")]))
 end
 
 function _horizdim(index::FileIndex, ::Type{NonDimensionCoords})
-    Tuple(MessageDimension{Horizontal}.(["x", "y"], [getone(index, "Nx"), getone(index, "Ny")]))
+    Tuple(MessageDimension{Horizontal}.(["x", "y"], ["x", "y"],[getone(index, "Nx"), getone(index, "Ny")]))
 end
 
 function _horizdim(index::FileIndex, ::Type{NoCoords})
-    Tuple(MessageDimension{Other}("values", getone(index, "numberOfPoints")))
+    Tuple(MessageDimension{Other}("values", "values",getone(index, "numberOfPoints")))
 end
 
 function _dim_values(index::FileIndex, dim::MessageDimension{<:NonHorizontal})
-    vals = index[dim.name]
+    vals = index[dimgribname(dim)]
     # Convert time dimension to DateTime
     # if occursin("time", dim.name)
     #     vals = Dates.Second.(vals) .+ DEFAULT_EPOCH
@@ -162,13 +165,13 @@ function _dim_values(index::FileIndex, dim::MessageDimension{<:NonHorizontal})
 end
 
 function _dim_values(index::FileIndex, dim::MessageDimension{Horizontal})
-    if dim.name == "lon"
+    if dimgribname(dim) == "longitude"
         index._first_data[1][:, 1]
-    elseif dim.name == "lat"
+    elseif dimgribname(dim) == "latitude"
         index._first_data[2][1, :]
-    elseif dim.name == "x"
+    elseif dimgribname(dim) == "x"
         index._first_data[1]
-    elseif dim.name == "y"
+    elseif dimgribname(dim) == "y"
         index._first_data[2]
     end
 end
@@ -214,15 +217,15 @@ end
 
 function message_indice(index::FileIndex, mind::MessageIndex, dim::AbstractDim{<:Vertical})
     vals = _dim_values(index, dim)
-    !(dimname(dim) == mind["typeOfLevel"])  && (return nothing)
+    !(dimgribname(dim) == mind["typeOfLevel"])  && (return nothing)
     return findfirst(x -> x == mind["level"], vals)
 end
 
-function message_indice(index::FileIndex, mind::MessageIndex, dim::ArtificialDimension{<:Vertical})
-    vals = _dim_values(index, dim)
-    !(dim.gribname == mind["typeOfLevel"])  && (return nothing)
-    return findfirst(x -> x == mind["level"], vals)
-end
+# function message_indice(index::FileIndex, mind::MessageIndex, dim::ArtificialDimension{<:Vertical})
+#     vals = _dim_values(index, dim)
+#     !(dimgribname(dim) == mind["typeOfLevel"])  && (return nothing)
+#     return findfirst(x -> x == mind["level"], vals)
+# end
 
 function message_indices(index::FileIndex, mind::MessageIndex, dims::Dimensions)
     indices = Int[]
