@@ -90,8 +90,14 @@ getvars(ds::GRIBDataset) = vcat(keys(ds.dims), getlayersname(ds))
 _dim_values(ds::GRIBDataset, dim) = _dim_values(ds.index, dim)
 _get_dim(ds::GRIBDataset, key) = _get_dim(ds.dims, key)
 
+### Implementation of CommonDataModel
 path(ds::GRIBDataset) = ds.index.grib_path
-CDM.dim(ds::GRIBDataset, dimname::String) = dimlength(ds.dims[dimname])
+CDM.dim(ds::GRIBDataset, dimname::String) = dimlength(_get_dim(ds.dims, dimname))
+dimnames(ds::GRIBDataset) = keys(ds.dims)
+
+attribnames(ds::GRIBDataset) = keys(ds.attrib)
+attrib(ds::GRIBDataset, attribname::String) = ds.attrib[attribname]
+
 # _dim_values(ds::GRIBDataset, dim::Dimension{Horizontal}) = _dim_values(ds.index, dim)
 
 

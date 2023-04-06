@@ -66,6 +66,14 @@ _get_verticaldims(dims) = _filter_on_dimtype(dims, Vertical)
 _get_horizontaldims(dims) = _filter_on_dimtype(dims, Horizontal)
 _get_otherdims(dims) = _filter_on_dimtype(dims, Other)
 
+_size_dims(dims) = Tuple([dimlength(d) for d in dims])
+
+function _get_dim(dims, dname)::AbstractDim 
+    fdim = dims[keys(dims) .== dname]
+    fdim == () && throw(KeyError(dname))
+    return first(fdim)
+end
+
 function _horizontaltype(index::FileIndex)::Type{<:Horizontal}
     grid_type = getone(index, "gridType")
     if grid_type in GRID_TYPES_DIMENSION_COORDS
@@ -102,7 +110,7 @@ function _build_verticaldims(index)
     dims = AbstractDim[]
     type_of_levels = index["typeOfLevel"]
 
-    # We ignore those dimensions, since they imply a scalar coordinate variable
+    # Typically, type of levels like surface and meanSea are ignored
     type_of_levels = filter(x -> x ∈ COORDINATE_VARIABLES_KEYS, type_of_levels)
 
     # This checks if for some level types, some variables are defined on distinct level values.
@@ -138,14 +146,6 @@ function _horizdim(index::FileIndex, ::Type{NoCoords})
     Tuple(MessageDimension{Other}("values", getone(index, "numberOfPoints")))
 end
 
-_size_dims(dims) = Tuple([dimlength(d) for d in dims])
-
-function _get_dim(dims, name)::AbstractDim 
-    fdim = dims[keys(dims) .== name]
-    fdim == () && throw(KeyError(name))
-    return first(fdim)
-end
-
 function _dim_values(index::FileIndex, dim::MessageDimension{<:NonHorizontal})
     vals = index[dim.name]
     # Convert time dimension to DateTime
@@ -173,7 +173,8 @@ function _dim_values(index::FileIndex, dim::MessageDimension{Horizontal})
     end
 end
 
-_dim_values(index::FileIndex, dim::Union{<:ArtificialDimension, <:IndexedDimension}) = identity.(dim.values)
+_dim_values(::FileIndex, dim::Union{<:ArtificialDimension, <:IndexedDimension}) = _dim_values(dim)
+_dim_values(dim::Union{<:ArtificialDimension, <:IndexedDimension}) = identity.(dim.values)
 
 # _map_dimname(dimname) = get(GRIB_KEY_TO_DIMNAMES_MAP, dimname, dimname)
 _map_dimname(dimname) = dimname

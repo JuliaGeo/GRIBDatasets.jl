@@ -122,8 +122,15 @@ end
 Base.parent(var::Variable) = var.values
 Base.size(var::Variable) = _size_dims(var.dims)
 Base.getindex(var::Variable, I...) = getindex(parent(var), I...)
+
+### Implementation of CommonDataModel
 name(var::Variable) = var.name
 CDM.dim(var::Variable, dimname::String) = dimlength(var.dims[dimname])
+dimnames(var::Variable) = keys(var.dims)
+
+attribnames(var::Variable) = keys(var.attrib)
+attrib(var::Variable, attribname::String) = var.attrib[attribname]
+
 
 _get_dim(var::Variable, key::String) = _get_dim(var.dims, key)
 

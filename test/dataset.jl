@@ -6,7 +6,7 @@ using GRIBDatasets: Variable
 using GRIBDatasets: DATA_ATTRIBUTES_KEYS, GRID_TYPE_MAP
 using GRIBDatasets: _to_datetime
 using GRIBDatasets: DiskValues, Variable
-
+using GRIBDatasets: CDM
 
 @testset "dataset and variables" begin
     grib_path = joinpath(dir_testfiles, "era5-levels-members.grib")
@@ -14,6 +14,17 @@ using GRIBDatasets: DiskValues, Variable
     index = ds.index
 
     varstring = "z"
+
+    @testset "CommonDataModel implementation" begin
+        @test CDM.dim(ds, "number") == 10
+        @test length(CDM.dimnames(ds)) == 5
+        @test CDM.dims(ds) isa AbstractDict
+        @test CDM.dims(ds)["number"] == 10
+
+        var = ds["z"]
+        @test length(CDM.dimnames(var)) == 5
+    end
+
     @testset "dataset indexing" begin
         vars = keys(ds)
         @test vars[1] == "lon"
@@ -26,10 +37,27 @@ using GRIBDatasets: DiskValues, Variable
     end
 
     @testset "dim as variable" begin
-        dimvar = ds["lon"]
-        @test dimvar isa Variable
-        @test collect(dimvar) isa AbstractArray
-        @test dimvar[1:2] == [0., 3.]
+
+        @testset "message dim" begin
+            dimvar = ds["lon"]
+            @test dimvar isa Variable
+            @test collect(dimvar) isa AbstractArray
+            @test dimvar[1:2] == [0., 3.]
+        end
+
+        @testset "indexed dim" begin
+            dimvar = ds["number"]
+            @test dimvar isa Variable
+            @test collect(dimvar) isa AbstractArray
+            @test dimvar[1:2] == [0, 1]
+        end
+
+        @testset "vertical dim" begin
+            dimvar = ds["isobaricInhPa"]
+            @test dimvar isa Variable
+            @test collect(dimvar) isa AbstractArray
+            @test dimvar[1:2] == [500, 850]
+        end
     end
 
     @testset "variable indexing" begin
@@ -59,14 +87,17 @@ using GRIBDatasets: DiskValues, Variable
 
         u10 = ds2["u10"]
 
-        t2 = ds2["t2m"]
+        @test GDS._dim_values(GDS._get_dim(u10, "heightAboveGround_2")) == [10]
+        
+        t2m = ds2["t2m"]
+        @test GDS._dim_values(GDS._get_dim(t2m, "heightAboveGround")) == [2]
     end
 
     @testset "upfront filtering" begin
         only_first_member = Dict("number" => 1)
 
-        ds = GRIBDataset(grib_path; filter_by_values = only_first_member)
-        length(ds["number"]) == 1
+        dsf = GRIBDataset(grib_path; filter_by_values = only_first_member)
+        length(dsf["number"]) == 1
     end
 
     @testset "variable attributes" begin

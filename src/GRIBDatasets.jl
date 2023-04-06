@@ -3,13 +3,10 @@ module GRIBDatasets
 using Dates
 using GRIB
 using DataStructures
-using DiskArrays
+import DiskArrays as DA
 using CommonDataModel: AbstractDataset, AbstractVariable, show_dim
-import CommonDataModel: path, name, dimnames, isopen
-using CommonDataModel
-
-const DA = DiskArrays
-const CDM = CommonDataModel
+import CommonDataModel: path, name, dimnames, isopen, attribnames, attrib
+import CommonDataModel as CDM
 
 const DEFAULT_EPOCH = DateTime(1970, 1, 1, 0, 0)
 
