@@ -80,7 +80,7 @@ GRIBDataset(filepath::AbstractString; filter_by_values = Dict()) = GRIBDataset(F
 
 Base.keys(ds::Dataset) = getvars(ds)
 Base.haskey(ds::Dataset, key) = key in keys(ds)
-Base.getindex(ds::Dataset, key) = CFVariable(ds, string(key))
+Base.getindex(ds::Dataset, key) = cfvariable(ds, string(key))
 
 getlayersid(ds::GRIBDataset) = ds.index["paramId"]
 getlayersname(ds::GRIBDataset) = string.(ds.index["cfVarName"])

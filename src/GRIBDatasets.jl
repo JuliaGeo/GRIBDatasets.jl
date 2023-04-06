@@ -4,7 +4,7 @@ using Dates
 using GRIB
 using DataStructures
 import DiskArrays as DA
-using CommonDataModel: AbstractDataset, AbstractVariable, show_dim
+using CommonDataModel: AbstractDataset, AbstractVariable, show_dim, CFVariable
 import CommonDataModel: path, name, dimnames, isopen, attribnames, attrib
 import CommonDataModel as CDM
 

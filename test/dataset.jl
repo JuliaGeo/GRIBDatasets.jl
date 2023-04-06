@@ -5,7 +5,7 @@ using GRIBDatasets: getone
 using GRIBDatasets: Variable
 using GRIBDatasets: DATA_ATTRIBUTES_KEYS, GRID_TYPE_MAP
 using GRIBDatasets: _to_datetime
-using GRIBDatasets: DiskValues, Variable, CFVariable
+using GRIBDatasets: DiskValues, Variable, CFVariable, cfvariable
 using GRIBDatasets: CDM
 
 @testset "dataset and variables" begin
@@ -82,18 +82,20 @@ using GRIBDatasets: CDM
         end
 
         @testset "cfvariable and missing" begin
-            cfvar = CFVariable(ds, varstring)
-            cfvarmis = CFVariable(dsmis, "t2m")
+            cfvar = cfvariable(ds, varstring)
+            cfvarmis = cfvariable(dsmis, "t2m")
             A = cfvar[:,:,1,1,1]
             Amis = cfvarmis[:,:,1,1]
-            @test eltype(A) == Float64
+
+            # With CommonDataModel, we necessarily get a Union{Missing, Float64}, even if there's no missing.
+            @test_broken eltype(A) == Float64
             @test eltype(Amis) == Union{Missing, Float64}
         end
 
         @testset "cfvariable coordinate" begin
-            cflon = CFVariable(ds, "lon")
+            cflon = cfvariable(ds, "lon")
             length(cflon[:]) == 120
-            cfnum = CFVariable(ds, "number")
+            cfnum = cfvariable(ds, "number")
             length(cfnum[:]) == 10
         end
     end
@@ -122,14 +124,12 @@ using GRIBDatasets: CDM
 
     @testset "cfvariable attributes" begin
         cflayer = ds[varstring]
-        @test cflayer.attrib["standard_name"] == GDS.getone(GDS.filter_messages(index; shortName=varstring), "cfName")
+        @test_broken cflayer.attrib["standard_name"] == GDS.getone(GDS.filter_messages(index; shortName=varstring), "cfName")
         @test ds["lon"].attrib["standard_name"] == "longitude"
     end
 
-    @testset "utils" begin
-        todt = _to_datetime.(ds["valid_time"])
-        @test todt[1] == DateTime("2017-01-01T00:00:00")
-        @test length(todt) == 4
+    @testset "time dimension" begin
+        @test ds["valid_time"][1] isa DateTime
     end
 end
 

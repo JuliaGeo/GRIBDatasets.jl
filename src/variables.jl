@@ -135,6 +135,7 @@ missing_value(var::Variable) = parent(var) isa DiskValues ? missing_value(parent
 name(var::AbstractGRIBVariable) = varname(var)
 CDM.dim(var::AbstractGRIBVariable, dimname::String) = dimlength(_get_dim(var, dimname))
 dimnames(var::AbstractGRIBVariable) = keys(dims(var))
+CDM.variable(ds::GRIBDataset, variablename::AbstractString) = Variable(ds, variablename)
 
 attribnames(var::AbstractGRIBVariable) = keys(var.attrib)
 attrib(var::AbstractGRIBVariable, attribname::String) = var.attrib[attribname]
