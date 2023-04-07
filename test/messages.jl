@@ -8,6 +8,11 @@ using GRIB
     grib_path = joinpath(dir_testfiles, "era5-levels-members.grib")
     f = GribFile(grib_path)
     message = first(f)
+    valid = read_message(message, "valid_time")
+    time = read_message(message, "time")
+
+    @test valid == time
+
     mindex = MessageIndex(message)
 
     @test mindex["dataType"] == "an"
@@ -20,6 +25,25 @@ using GRIB
 
     destroy(f)
 end
+
+# gi = Index(joinpath(dir_testfiles, "ENH18080914"), "cfVarName")
+# select!(gi, "cfVarName", "sdor")
+# msdor = first(gi)
+# msdor["validityDate"], msdor["validityTime"]
+# mind = MessageIndex(msdor)
+
+# gi2 = Index(joinpath(dir_testfiles, "ENH18080914"), "cfVarName")
+# select!(gi2, "cfVarName", "u")
+# mu = first(gi2)
+# mu["validityDate"], mu["validityTime"]
+
+# mindu = MessageIndex(mu)
+
+
+# function to_dict(m::Message)
+#     ks = string.(keys(m))
+#     Dict(k => m[k] for k in ks)
+# end
 
 # f = GribFile(grib_path)
 

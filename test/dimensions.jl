@@ -1,13 +1,13 @@
 using GRIBDatasets
 using GRIBDatasets: _alldims, _horizontaltype, _horizdim, _dim_values, _size_dims, _otherdims, _verticaldims
-using GRIBDatasets: _separate_distinct_levels
+using GRIBDatasets: _separate_distinct_levels, _get_dim
 using GRIBDatasets: Horizontal, Vertical, Other, NonHorizontal
 using GRIBDatasets: Lonlat, NonDimensionCoords, NoCoords
 using GRIBDatasets: MessageDimension, IndexedDimension, ArtificialDimension, Dimensions, AbstractDim
 using GRIBDatasets: dimlength, dimname
 using GRIBDatasets: filter_messages, message_indices, message_indice, messages_indices
 using GRIBDatasets: _get_verticaldims, _get_horizontaldims, _get_otherdims
-using GRIBDatasets: _is_in_artificial
+using GRIBDatasets: _is_in_artificial, _replace_with_artificial, _is_length_consistent
 using Test
 
 @testset "dimension from index" begin
@@ -38,6 +38,7 @@ using Test
     @test era_alldims isa Dimensions
 
     @test dimname.(_get_verticaldims(era_alldims)) == dimname.(eravertical)
+
     # for lonlat grid, x dim must be one dimensional
     @test _dim_values(era5, era_alldims[1]) isa Vector
     lam_alldims = _alldims(lambert)

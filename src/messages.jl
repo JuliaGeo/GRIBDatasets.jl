@@ -259,10 +259,11 @@ mind["name"]
 """
 function MessageIndex(message::GRIB.Message; index_keys = ALL_KEYS)
     values = read_message.(Ref(message), index_keys)
+    headers = Dict(k => v for (k,v) in zip(index_keys, values))
+    
     offset = Int(message["offset"])
     length = message["totalLength"]
 
-    headers = Dict(k => v for (k,v) in zip(index_keys, values))
     MessageIndex(headers, offset, length)
 end
 

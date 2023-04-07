@@ -18,6 +18,7 @@ dimensions.
 """
 struct MessageDimension{T} <: AbstractDim{T}
     name::String
+    gribname::String
     length::Int
 end
 
@@ -27,6 +28,7 @@ Dimension created from reading the index values with the keys in the `COORDINATE
 """
 struct IndexedDimension{T} <: AbstractDim{T}
     name::String
+    gribname::String
     values::Vector{Any}
 end
 
@@ -47,11 +49,16 @@ end
 
 const Dimensions = Tuple{AbstractDim, Vararg{AbstractDim}}
 
-Base.keys(dims::Dimensions) = [d.name for d in dims]
+# Base.keys(dims::Dimensions) = [k for (k, v) in dims]
+Base.keys(dims::Dimensions) = [dimname(dim) for dim in dims]
 Base.in(name::String, dims::Dimensions) = name in keys(dims)
-Base.getindex(dims::Dimensions, name::String) = first(dims[keys(dims) .== name])
+Base.getindex(dims::Dimensions, name::String)::AbstractDim = _get_dim(dims, name)
+# Base.iterate(dims::Dimensions) = iterate(map(dim -> dim.name => dim.length, dims))
+# Base.iterate(dims::Dimensions, i::Int64) = iterate(map(dim -> dim.name => dim.length, dims), i)
+Base.pairs(dims::Dimensions) = map(dim -> dimname(dim) => dimlength(dim), dims)
 
 dimname(dim::AbstractDim) = dim.name
+dimgribname(dim::AbstractDim) = dim.gribname
 
 dimlength(dim::AbstractDim) = dim.length
 dimlength(dim::Union{IndexedDimension, ArtificialDimension}) = length(dim.values)
@@ -61,6 +68,14 @@ _filter_on_dimtype(dims, type) = Tuple([dim for dim in dims if _dimtype(dim) == 
 _get_verticaldims(dims) = _filter_on_dimtype(dims, Vertical)
 _get_horizontaldims(dims) = _filter_on_dimtype(dims, Horizontal)
 _get_otherdims(dims) = _filter_on_dimtype(dims, Other)
+
+_size_dims(dims) = Tuple([dimlength(d) for d in dims])
+
+function _get_dim(dims, dname)::AbstractDim 
+    fdim = dims[keys(dims) .== dname]
+    fdim == () && throw(KeyError(dname))
+    return first(fdim)
+end
 
 function _horizontaltype(index::FileIndex)::Type{<:Horizontal}
     grid_type = getone(index, "gridType")
@@ -84,13 +99,16 @@ function _otherdims(index::FileIndex; coord_keys = COORDINATE_VARIABLES_KEYS)
         # For the moment, we only consider `valid_time` key for time dimension.
         # This should be extended in the future
         if haskey(index, key) && key ∉ IGNORED_COORDS
-            push!(dims, _build_otherdims(key, index))
+            newdim = _build_otherdims(key, index)
+            if !(dimlength(newdim) == 1 && dimgribname(newdim) in KEYS_TO_SQUEEZE)
+                push!(dims, newdim)
+            end
         end
     end
     Tuple(dims)
 end
 
-_build_otherdims(key, headers) = IndexedDimension{Other}(key, headers[key])
+_build_otherdims(key, headers) = IndexedDimension{Other}(key, key, headers[key])
 
 _verticaldims(index) = Tuple(_build_verticaldims(index))
 
@@ -98,7 +116,7 @@ function _build_verticaldims(index)
     dims = AbstractDim[]
     type_of_levels = index["typeOfLevel"]
 
-    # We ignore those dimensions, since they imply a scalar coordinate variable
+    # Typically, type of levels like surface and meanSea are ignored
     type_of_levels = filter(x -> x ∈ COORDINATE_VARIABLES_KEYS, type_of_levels)
 
     # This checks if for some level types, some variables are defined on distinct level values.
@@ -115,7 +133,7 @@ function _build_verticaldims(index)
 
             end
         else
-            dim = IndexedDimension{Vertical}(dimname, filtered_index["level"])
+            dim = IndexedDimension{Vertical}(dimname, dimname, filtered_index["level"])
             push!(dims, dim)
         end
     end
@@ -123,21 +141,19 @@ function _build_verticaldims(index)
 end
 
 function _horizdim(index::FileIndex, ::Type{Lonlat})
-    Tuple(MessageDimension{Horizontal}.(["lon", "lat"], [getone(index, "Nx"), getone(index, "Ny")]))
+    Tuple(MessageDimension{Horizontal}.(["lon", "lat"], ["longitude", "latitude"],[getone(index, "Nx"), getone(index, "Ny")]))
 end
 
 function _horizdim(index::FileIndex, ::Type{NonDimensionCoords})
-    Tuple(MessageDimension{Horizontal}.(["x", "y"], [getone(index, "Nx"), getone(index, "Ny")]))
+    Tuple(MessageDimension{Horizontal}.(["x", "y"], ["x", "y"],[getone(index, "Nx"), getone(index, "Ny")]))
 end
 
 function _horizdim(index::FileIndex, ::Type{NoCoords})
-    Tuple(MessageDimension{Other}("values", getone(index, "numberOfPoints")))
+    Tuple(MessageDimension{Other}("values", "values",getone(index, "numberOfPoints")))
 end
 
-_size_dims(dims) = Tuple([dimlength(d) for d in dims])
-
 function _dim_values(index::FileIndex, dim::MessageDimension{<:NonHorizontal})
-    vals = index[dim.name]
+    vals = index[dimgribname(dim)]
     # Convert time dimension to DateTime
     # if occursin("time", dim.name)
     #     vals = Dates.Second.(vals) .+ DEFAULT_EPOCH
@@ -152,18 +168,19 @@ function _dim_values(index::FileIndex, dim::MessageDimension{<:NonHorizontal})
 end
 
 function _dim_values(index::FileIndex, dim::MessageDimension{Horizontal})
-    if dim.name == "lon"
+    if dimgribname(dim) == "longitude"
         index._first_data[1][:, 1]
-    elseif dim.name == "lat"
+    elseif dimgribname(dim) == "latitude"
         index._first_data[2][1, :]
-    elseif dim.name == "x"
+    elseif dimgribname(dim) == "x"
         index._first_data[1]
-    elseif dim.name == "y"
+    elseif dimgribname(dim) == "y"
         index._first_data[2]
     end
 end
 
-_dim_values(index::FileIndex, dim::Union{<:ArtificialDimension, <:IndexedDimension}) = identity.(dim.values)
+_dim_values(::FileIndex, dim::Union{<:ArtificialDimension, <:IndexedDimension}) = _dim_values(dim)
+_dim_values(dim::Union{<:ArtificialDimension, <:IndexedDimension}) = identity.(dim.values)
 
 # _map_dimname(dimname) = get(GRIB_KEY_TO_DIMNAMES_MAP, dimname, dimname)
 _map_dimname(dimname) = dimname
@@ -194,6 +211,11 @@ function _replace_with_artificial(artificialdim, dims)
     end
 end
 
+function _is_length_consistent(dim, dims)
+    indims = dims[dimname(dim)]
+    return dimlength(indims) == dimlength(dim) ? true : false
+end
+
 message_indice(index::FileIndex, mind::MessageIndex, dim::AbstractDim) = nothing
 
 function message_indice(index::FileIndex, mind::MessageIndex, dim::IndexedDimension{<:Other})
@@ -203,15 +225,15 @@ end
 
 function message_indice(index::FileIndex, mind::MessageIndex, dim::AbstractDim{<:Vertical})
     vals = _dim_values(index, dim)
-    !(dimname(dim) == mind["typeOfLevel"])  && (return nothing)
+    !(dimgribname(dim) == mind["typeOfLevel"])  && (return nothing)
     return findfirst(x -> x == mind["level"], vals)
 end
 
-function message_indice(index::FileIndex, mind::MessageIndex, dim::ArtificialDimension{<:Vertical})
-    vals = _dim_values(index, dim)
-    !(dim.gribname == mind["typeOfLevel"])  && (return nothing)
-    return findfirst(x -> x == mind["level"], vals)
-end
+# function message_indice(index::FileIndex, mind::MessageIndex, dim::ArtificialDimension{<:Vertical})
+#     vals = _dim_values(index, dim)
+#     !(dimgribname(dim) == mind["typeOfLevel"])  && (return nothing)
+#     return findfirst(x -> x == mind["level"], vals)
+# end
 
 function message_indices(index::FileIndex, mind::MessageIndex, dims::Dimensions)
     indices = Int[]
@@ -228,10 +250,4 @@ Find at which indices in `dims` correspond each GRIB message in `index`.
 """
 messages_indices(index::FileIndex, dims::Dimensions) = [message_indices(index, mind, dims) for mind in index.messages]
 
-Base.show(io::IO, mime::MIME"text/plain", dim::MessageDimension) = print(io, "$(dim.name) = $(dimlength(dim))")
-function Base.show(io::IO, mime::MIME"text/plain", dims::Dimensions) 
-    println(io, "Dimensions:")
-    for dim in dims
-        println(io, "\t $(dim.name) = $(dimlength(dim))")
-    end
-end
+Base.show(io::IO, mime::MIME"text/plain", dims::Dimensions) = show_dim(io, pairs(dims))
