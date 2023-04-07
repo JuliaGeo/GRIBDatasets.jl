@@ -187,7 +187,7 @@ For each `index` values in `key`, give the values in `tocheck` related with it.
 ```jldoctest
 index = FileIndex(example_file)
 
-get_values_from_filtered(index, "cfVarName", "level")
+GDS.get_values_from_filtered(index, "cfVarName", "level")
 
 # output
 Dict{SubString{String}, Vector{Any}} with 2 entries:
