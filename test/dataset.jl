@@ -123,7 +123,7 @@ using GRIBDatasets: CDM
 
     @testset "cfvariable attributes" begin
         cflayer = ds[varstring]
-        @test_broken cflayer.attrib["standard_name"] == GDS.getone(GDS.filter_messages(index; shortName=varstring), "cfName")
+        @test cflayer.attrib["standard_name"] == GDS.getone(GDS.filter_messages(index; shortName=varstring), "cfName")
         @test ds["lon"].attrib["standard_name"] == "longitude"
     end
 

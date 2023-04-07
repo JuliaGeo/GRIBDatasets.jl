@@ -113,6 +113,11 @@ function getone(index::FileIndex, key::AbstractString)
 end
 
 missing_value(index::FileIndex) = getone(index, "missingValue")
+
+function build_valid_time(index::FileIndex)
+    build_valid_time(identity.(index["valid_time"]), identity.(index["step"]))
+end
+
 """
     filter_messages(index::FileIndex{T}, args...; kwargs...)
 Filter the messages in the `index` and return a new updated index. The filtering keys must be expressed as keyword arguments pair.
@@ -170,6 +175,11 @@ end
 #     end
 # end
 
+_only(vec) = try 
+    only(vec) 
+catch e
+    e isa ArgumentError ? vec : rethrow()
+end
 """
     get_values_from_filtered(index, key, tocheck)
 For each `index` values in `key`, give the values in `tocheck` related with it.
