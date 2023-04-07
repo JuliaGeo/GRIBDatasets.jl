@@ -85,7 +85,7 @@ julia> ds["valid_time"][:]
 ```
 
 The attributes of any variable can be accessed this way:
-```julia-repl
+```julia
 julia> ds["z"].attrib
 Dict{String, Any} with 3 entries:
   "units"         => "m**2 s**-2"
