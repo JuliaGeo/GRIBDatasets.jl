@@ -7,7 +7,7 @@ using GRIBDatasets: MessageDimension, IndexedDimension, ArtificialDimension, Dim
 using GRIBDatasets: dimlength, dimname
 using GRIBDatasets: filter_messages, message_indices, message_indice, messages_indices
 using GRIBDatasets: _get_verticaldims, _get_horizontaldims, _get_otherdims
-using GRIBDatasets: _is_in_artificial
+using GRIBDatasets: _is_in_artificial, _replace_with_artificial, _is_length_consistent
 using Test
 
 @testset "dimension from index" begin

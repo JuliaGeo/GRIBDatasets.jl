@@ -160,6 +160,15 @@ function Variable(ds::GRIBDataset, key)
             length(artdim) > 1 && error("More than one artificial for this variable. Not supported.")
             dims = _replace_with_artificial(artdim[1], dims)
         end
+
+        for d in dims
+            if !_is_length_consistent(d, dsdims)
+                @warn "The length of dimension $(dimname(d)) in variable $key is different
+                from the corresponding dimension in the dataset. This could lead to unexpected
+                behaviour."
+            end
+        end
+
         dv = DiskValues(ds, layer_index, dims)
         attributes = layer_attributes(layer_index)
         Variable(ds, string(key), dims, dv, attributes)

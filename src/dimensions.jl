@@ -208,6 +208,11 @@ function _replace_with_artificial(artificialdim, dims)
     end
 end
 
+function _is_length_consistent(dim, dims)
+    indims = dims[dimname(dim)]
+    return dimlength(indims) == dimlength(dim) ? true : false
+end
+
 message_indice(index::FileIndex, mind::MessageIndex, dim::AbstractDim) = nothing
 
 function message_indice(index::FileIndex, mind::MessageIndex, dim::IndexedDimension{<:Other})
