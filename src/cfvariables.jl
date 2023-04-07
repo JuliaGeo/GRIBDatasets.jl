@@ -44,6 +44,7 @@ function cfvariable(ds, varname)
     misval = missing_value(v)
     CDM.cfvariable(
         ds, varname;
+        _v = v,
         missing_value = isnothing(misval) ? eltype(v)[] : [misval],
         attrib = cflayer_attributes(v),
     )
