@@ -99,7 +99,10 @@ function _otherdims(index::FileIndex; coord_keys = COORDINATE_VARIABLES_KEYS)
         # For the moment, we only consider `valid_time` key for time dimension.
         # This should be extended in the future
         if haskey(index, key) && key ∉ IGNORED_COORDS
-            push!(dims, _build_otherdims(key, index))
+            newdim = _build_otherdims(key, index)
+            if !(dimlength(newdim) == 1 && dimgribname(newdim) in KEYS_TO_SQUEEZE)
+                push!(dims, newdim)
+            end
         end
     end
     Tuple(dims)

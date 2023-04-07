@@ -111,9 +111,9 @@ using GRIBDatasets: CDM
     end
 
     @testset "upfront filtering" begin
-        only_first_member = Dict("number" => 1)
-        dsf = GRIBDataset(grib_path; filter_by_values = only_first_member)
-        length(dsf["number"]) == 1
+        only_one_level = Dict("level" => 500)
+        dsf = GRIBDataset(grib_path; filter_by_values = only_one_level)
+        @test length(dsf["isobaricInhPa"]) == 1
     end
 
     @testset "variable attributes" begin

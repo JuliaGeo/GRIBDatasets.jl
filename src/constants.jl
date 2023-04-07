@@ -259,6 +259,8 @@ const CF_MAP_ATTRIBUTES = Dict(
     "name" => "long_name",
     "units" => "units"
 )
+
+const KEYS_TO_SQUEEZE = ["number"]
 # """
 #     GRIB_KEY_TO_DIMNAMES_MAP
 # Maps the GRIB keys to the name the variable will have in the GRIBDataset.
