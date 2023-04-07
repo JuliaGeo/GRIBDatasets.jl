@@ -24,7 +24,7 @@ Dimensions
    valid_time = 4
 
 Variables
-     (120)
+  lon   (120)
     Datatype:    Float64 (Float64)
     Dimensions:  lon
     Attributes:
@@ -32,7 +32,7 @@ Variables
      long_name            = longitude
      standard_name        = longitude
 
-     (61)
+  lat   (61)
     Datatype:    Float64 (Float64)
     Dimensions:  lat
     Attributes:
@@ -40,7 +40,7 @@ Variables
      long_name            = latitude
      standard_name        = latitude
 
-     (4)
+  valid_time   (4)
     Datatype:    Dates.DateTime (Int64)
     Dimensions:  valid_time
     Attributes:
@@ -49,7 +49,7 @@ Variables
      long_name            = time
      standard_name        = time
 
-     (120 × 61 × 4)
+  z   (120 × 61 × 4)
     Datatype:    Union{Missing, Float64} (Float64)
     Dimensions:  lon × lat × valid_time
     Attributes:
