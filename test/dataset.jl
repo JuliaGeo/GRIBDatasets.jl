@@ -10,7 +10,6 @@ using GRIBDatasets: CDM
 
 @testset "dataset and variables" begin
     grib_path = joinpath(dir_testfiles, "era5-levels-members.grib")
-    
     ds = GRIBDataset(grib_path)
     dsmis = GRIBDataset(joinpath(dir_testfiles, "fields_with_missing_values.grib"))
     index = ds.index
