@@ -115,11 +115,11 @@ DA.haschunks(A::DiskValues) = DA.Unchunked()
     Variable <: AbstractArray
 Variable of a dataset `ds`. It can be a layer or a dimension. In case of a layer, the values are lazily loaded when it's sliced.
 """
-struct Variable{T, N, AT <: Union{Array{T, N}, DA.AbstractDiskArray{T, N}}} <: AbstractGRIBVariable{T,N}
-    ds::GRIBDataset
+struct Variable{T, N, TA <: Union{Array{T, N}, DA.AbstractDiskArray{T, N}}, TP} <: AbstractGRIBVariable{T,N}
+    ds::TP
     name::String
     dims::NTuple{N, AbstractDim}
-    values::AT
+    values::TA
     attrib::Dict{String, Any}
 end
 Base.parent(var::Variable) = var.values
@@ -140,6 +140,7 @@ CDM.variable(ds::GRIBDataset, variablename::AbstractString) = Variable(ds, varia
 attribnames(var::AbstractGRIBVariable) = keys(var.attrib)
 attrib(var::AbstractGRIBVariable, attribname::String) = var.attrib[attribname]
 
+dataset(var::AbstractGRIBVariable) = var.ds
 
 _get_dim(var::Variable, key::String) = _get_dim(var.dims, key)
 

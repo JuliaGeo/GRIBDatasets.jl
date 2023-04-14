@@ -23,6 +23,10 @@ using GRIBDatasets: CDM
 
         var = ds["z"]
         @test length(CDM.dimnames(var)) == 5
+
+        @test CDM.dataset(var) == ds
+
+        @test CDM.name(ds[:t]) == CDM.name(ds["t"])
     end
 
     @testset "dataset indexing" begin
