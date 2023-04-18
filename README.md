@@ -51,7 +51,15 @@ Variables
 
   z   (120 × 61 × 4)
     Datatype:    Union{Missing, Float64} (Float64)
-    Dimensions:  lon × lat × valid_time
+    Dimensions:  lon × lat × isobaricInhPa × number × valid_time
+    Attributes:
+     units                = m**2 s**-2
+     long_name            = Geopotential
+     standard_name        = geopotential
+
+  t   (120 × 61 × 4)
+    Datatype:    Union{Missing, Float64} (Float64)
+    Dimensions:  lon × lat × isobaricInhPa × number × valid_time
     Attributes:
      units                = K
      long_name            = Temperature
