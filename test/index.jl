@@ -56,6 +56,3 @@ end
     dt1 = _to_datetime.(in1["valid_time"])
     dt2 = _to_datetime.(in2["valid_time"])
 end
-# with_messages(index; paramId = 129, level = 500) do m
-#     println(m["level"])
-# end

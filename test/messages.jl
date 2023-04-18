@@ -25,28 +25,3 @@ using GRIB
 
     destroy(f)
 end
-
-# gi = Index(joinpath(dir_testfiles, "ENH18080914"), "cfVarName")
-# select!(gi, "cfVarName", "sdor")
-# msdor = first(gi)
-# msdor["validityDate"], msdor["validityTime"]
-# mind = MessageIndex(msdor)
-
-# gi2 = Index(joinpath(dir_testfiles, "ENH18080914"), "cfVarName")
-# select!(gi2, "cfVarName", "u")
-# mu = first(gi2)
-# mu["validityDate"], mu["validityTime"]
-
-# mindu = MessageIndex(mu)
-
-
-# function to_dict(m::Message)
-#     ks = string.(keys(m))
-#     Dict(k => m[k] for k in ks)
-# end
-
-# f = GribFile(grib_path)
-
-# wanted = collect(Iterators.filter(grib) do msg
-#     msg["typeOfLevel"] == "hybrid"
-# end)

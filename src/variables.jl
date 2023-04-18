@@ -93,24 +93,6 @@ end
 DA.eachchunk(A::DiskValues) = DA.GridChunks(A, size(A))
 DA.haschunks(A::DiskValues) = DA.Unchunked()
 
-# function message_indices(index::FileIndex, mind::MessageIndex, dims::Dimensions)
-#     indices = Int[]
-#     for dim in dims
-#         if dim isa MessageDimension{<:NonHorizontal}
-#             vals = _dim_values(index, dim)
-#             ind = findfirst(x -> x == mind[dim.name], vals)
-#             push!(indices, ind)
-#         end
-#     end
-#     indices
-# end
-
-# """
-#     message_indices(index::FileIndex, mind::MessageIndex, dims::Dimensions)
-# Find at which indices in `dims` correspond each GRIB message in `index`.
-# """
-# messages_indices(index::FileIndex, dims::Dimensions) = [message_indices(index, mind, dims) for mind in index.messages]
-
 """
     Variable <: AbstractArray
 Variable of a dataset `ds`. It can be a layer or a dimension. In case of a layer, the values are lazily loaded when it's sliced.
@@ -208,8 +190,3 @@ end
 
 # Shifts the responsibility of showing the variable in the REPL to CommonDataModel
 Base.show(io::IO, mime::MIME"text/plain", var::AbstractGRIBVariable) = show(io, var)
-
-
-# function Base.show(io::IO, var::Variable)
-#     show(io, var.values)
-# end
