@@ -51,7 +51,7 @@ Variables
 
   z   (120 × 61 × 4)
     Datatype:    Union{Missing, Float64} (Float64)
-    Dimensions:  lon × lat × isobaricInhPa × number × valid_time
+    Dimensions:  lon × lat × valid_time
     Attributes:
      units                = m**2 s**-2
      long_name            = Geopotential
@@ -59,7 +59,7 @@ Variables
 
   t   (120 × 61 × 4)
     Datatype:    Union{Missing, Float64} (Float64)
-    Dimensions:  lon × lat × isobaricInhPa × number × valid_time
+    Dimensions:  lon × lat × valid_time
     Attributes:
      units                = K
      long_name            = Temperature
@@ -103,6 +103,17 @@ Dict{String, Any} with 3 entries:
 
 This package is similar to [CfGRIB.jl](https://github.com/ecmwf/cfgrib.jl), but the code has been adapted to be more Julian and to follow the `CommonDataModel` interface.
 
-## Caveats:
-- Only reading of GRIB format is currently possible with this package. But it should normally be straightforward to write a `GRIBDataset` to netCDF with `NCDatasets`.
-- GRIB format files may have a (very) large amount of different shapes. `GRIBDatasets` might not work for your specific edge case. If this happens, do not hesitate to open an issue.
+## Writing
+It's currently not possible to write the datasets to the GRIB format. If you want to modify the dataset, you need to convert it first to NetCDF and use NCDatasets. Converting a GRIB file to NetCDF is straightforward:
+
+```julia
+using NCDatasets
+using GRIBDatasets
+using Downloads: download
+
+grib_file = download("https://github.com/JuliaGeo/GRIBDatasets.jl/raw/98356af026ea39a5ec0b5e64e4289105492321f8/test/sample-data/era5-levels-members.grib")
+netcdf_file = "test.nc"
+NCDatasets.write(netcdf_file,GRIBDataset(grib_file))
+```
+## Opening issues:
+GRIB format files may have a (very) large amount of different shapes. `GRIBDatasets` might not work for your specific edge case. If this happens, please open an issue, if possible providing the file triggering the bug.
