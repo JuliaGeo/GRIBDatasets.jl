@@ -169,7 +169,7 @@ function _horizdims(index::FileIndex, ::Type{NonRegularGrid})
 end
 
 function _horizdims(index::FileIndex, ::Type{OtherGrid})
-    Tuple([MessageDimension{Other}("values", "values", getone(index, "numberOfPoints"))])
+    Tuple([MessageDimension{OtherGrid}("values", "values", getone(index, "numberOfPoints"))])
 end
 
 function _dim_values(index::FileIndex, dim::MessageDimension{<:NonHorizontal})
@@ -187,25 +187,40 @@ function _dim_values(index::FileIndex, dim::MessageDimension{<:NonHorizontal})
     identity.(vals)
 end
 
-function _dim_values(index::FileIndex, dim::Union{MessageDimension{RegularGrid}, MessageDimension{NonRegularGrid}})
+function _dim_values(index::FileIndex, dim::Union{MessageDimension{RegularGrid}})
     if dimgribname(dim) == "longitude"
         index._first_data[1][:, 1]
     elseif dimgribname(dim) == "latitude"
         index._first_data[2][1, :]
-    elseif dimgribname(dim) == "x"
-        index._first_data[1]
-    elseif dimgribname(dim) == "y"
-        index._first_data[2]
+    # elseif dimgribname(dim) == "x"
+    #     index._first_data[1]
+    # elseif dimgribname(dim) == "y"
+    #     index._first_data[2]
     end
 end
 
-_dim_values(index::FileIndex, dim::MessageDimension{Other}) = _dim_values(dim)
+_dim_values(index::FileIndex, dim::Union{MessageDimension{OtherGrid}, MessageDimension{NonRegularGrid}}) = nothing
 
 _dim_values(::FileIndex, dim::Union{<:ArtificialDimension, <:IndexedDimension}) = _dim_values(dim)
 _dim_values(dim::Union{<:ArtificialDimension, <:IndexedDimension}) = identity.(dim.values)
-_dim_values(dim::MessageDimension{Other}) = nothing
 
-_is_coordinates(index::FileIndex, dim::AbstractDim) = isnothing(_dim_values(index, dim))
+_has_coordinates(index::FileIndex, dim::AbstractDim) = !isnothing(_dim_values(index, dim))
+
+_filter_horizontal_dims(dims::Dimensions) = Tuple(x for x in dims if x isa MessageDimension{<:Horizontal})
+
+"""
+    additional_coordinates_varnames(dims::Dimensions)
+In case of irregular grids, eccodes might provide the longitude and latitude. If so, this will
+then be stored as additionnal variables.
+"""
+function additional_coordinates_varnames(dims::Dimensions)::Vector{<:AbstractString}
+    dimtypes = _dimtype.(dims)
+    if any(x -> x == NonRegularGrid || x == OtherGrid, dimtypes)
+        return ["longitude", "latitude"]
+    else
+        return String[]
+    end
+end
 # _map_dimname(dimname) = get(GRIB_KEY_TO_DIMNAMES_MAP, dimname, dimname)
 _map_dimname(dimname) = dimname
 

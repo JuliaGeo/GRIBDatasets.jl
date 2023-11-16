@@ -155,6 +155,10 @@ function Variable(ds::GRIBDataset, key)
         dv = DiskValues(ds, layer_index, dims)
         attributes = layer_attributes(layer_index)
         Variable(ds, string(key), dims, dv, attributes)
+    elseif key in additional_coordinates_varnames(ds.dims)
+        values = key == "longitude" ? ds.index._first_data[1] : ds.index._first_data[2]
+
+        Variable(ds, key, _filter_horizontal_dims(ds.dims), values, coordinate_attributes(key))
     else
         error("key $key not found in dataset")
     end
@@ -162,7 +166,7 @@ end
 
 function Variable(ds::GRIBDataset, dim::AbstractDim) 
     vals = _dim_values(ds, dim)
-    attributes = dim_attributes(dim)
+    attributes = coordinate_attributes(dim)
     Variable(ds, dim.name, (dim,), vals, attributes)
 end
 
@@ -182,11 +186,13 @@ function layer_attributes(index::FileIndex)
     attributes
 end
 
-function dim_attributes(dim)
+function coordinate_attributes(key)
     attributes = Dict{String, Any}()
-    merge!(attributes, copy(get(COORD_ATTRS, dimgribname(dim), Dict())))
+    merge!(attributes, copy(get(COORD_ATTRS, key, Dict())))
     attributes
 end
+
+coordinate_attributes(dim::AbstractDim) = coordinate_attributes(dimgribname(dim))
 
 # Shifts the responsibility of showing the variable in the REPL to CommonDataModel
 Base.show(io::IO, mime::MIME"text/plain", var::AbstractGRIBVariable) = show(io, var)

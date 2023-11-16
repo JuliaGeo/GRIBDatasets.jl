@@ -86,10 +86,10 @@ getlayersid(ds::GRIBDataset) = ds.index["paramId"]
 getlayersname(ds::GRIBDataset) = string.(ds.index["cfVarName"])
 
 function getvars(ds::GRIBDataset) 
-    dimension_vars = keys(filter(x -> !_is_coordinates(ds.index, x), ds.dims))
+    dimension_vars = keys(filter(x -> _has_coordinates(ds.index, x), ds.dims))
     layers_vars = getlayersname(ds)
-
-    vcat(dimension_vars, layers_vars)
+    coordinates_vars = additional_coordinates_varnames(ds.dims)
+    vcat(dimension_vars, coordinates_vars, layers_vars)
 end
 
 _dim_values(ds::GRIBDataset, dim) = _dim_values(ds.index, dim)
