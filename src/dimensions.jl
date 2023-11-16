@@ -5,8 +5,24 @@ abstract type Vertical <: AbstractDimType end
 abstract type Other <: AbstractDimType end
 const NonHorizontal = Union{Vertical, Other}
 
-struct RegularGrid <: Horizontal end 
+"""
+    RegularGrid <: Horizontal
+Represent regular grid types (typically regular_ll and regular_gg).
+The typical messages data is a 2-D matrix.
+"""
+struct RegularGrid <: Horizontal end
+
+"""
+    NonRegularGrid <: Horizontal
+Represent non-regular grid types.
+The typical messages data is a 2-D matrix.
+"""
 struct NonRegularGrid <: Horizontal end
+
+"""
+    OtherGrid <: Horizontal
+Represent non-regular grid types, where the typical messages data is a 1-D vector.
+"""
 struct OtherGrid <: Horizontal end
 
 abstract type AbstractDim{AbstractDimType} end
