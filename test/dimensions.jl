@@ -1,8 +1,8 @@
 using GRIBDatasets
-using GRIBDatasets: _alldims, _horizontaltype, _horizdim, _dim_values, _size_dims, _otherdims, _verticaldims
+using GRIBDatasets: _alldims, _horizontal_gridtype, _horizdims, _dim_values, _size_dims, _otherdims, _verticaldims
 using GRIBDatasets: _separate_distinct_levels, _get_dim
 using GRIBDatasets: Horizontal, Vertical, Other, NonHorizontal
-using GRIBDatasets: Lonlat, NonDimensionCoords, NoCoords
+using GRIBDatasets: RegularGrid, NonRegularGrid, OtherGrid
 using GRIBDatasets: MessageDimension, IndexedDimension, ArtificialDimension, Dimensions, AbstractDim
 using GRIBDatasets: dimlength, dimname
 using GRIBDatasets: filter_messages, message_indices, message_indice, messages_indices
@@ -20,12 +20,12 @@ using Test
     lambert_path = joinpath(dir_testfiles, "lambert_grid.grib")
     lambert = FileIndex(lambert_path)
 
-    @test _horizontaltype(era5) == Lonlat
-    @test _horizontaltype(gaussian) == Lonlat
-    @test _horizontaltype(lambert) == NonDimensionCoords
+    @test _horizontal_gridtype(era5) == RegularGrid
+    @test _horizontal_gridtype(gaussian) == RegularGrid
+    @test _horizontal_gridtype(lambert) == NonRegularGrid
 
-    erahoriz = _horizdim(era5, _horizontaltype(era5))
-    @test erahoriz[1] isa MessageDimension{Horizontal}
+    erahoriz = _horizdims(era5, _horizontal_gridtype(era5))
+    @test erahoriz[1] isa MessageDimension{<:Horizontal}
     @test dimname(erahoriz[1]) == "lon"
 
     eraother = _otherdims(era5)

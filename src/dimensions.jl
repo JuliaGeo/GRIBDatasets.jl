@@ -5,9 +5,9 @@ abstract type Vertical <: AbstractDimType end
 abstract type Other <: AbstractDimType end
 const NonHorizontal = Union{Vertical, Other}
 
-struct Lonlat <: Horizontal end 
-struct NonDimensionCoords <: Horizontal end
-struct NoCoords <: Horizontal end
+struct RegularGrid <: Horizontal end 
+struct NonRegularGrid <: Horizontal end
+struct OtherGrid <: Horizontal end
 
 abstract type AbstractDim{AbstractDimType} end
 
@@ -77,19 +77,23 @@ function _get_dim(dims, dname)::AbstractDim
     return first(fdim)
 end
 
-function _horizontaltype(index::FileIndex)::Type{<:Horizontal}
+function _horizontal_gridtype(index::FileIndex)::Type{<:Horizontal}
     grid_type = getone(index, "gridType")
+
+    # NOTE: `GRID_TYPES_DIMENSION_COORDS` and `GRID_TYPES_2D_NON_DIMENSION_COORDS` are legacy constant definitions from
+    # the python cfgrib package (https://github.com/ecmwf/cfgrib). It seems that they discriminate between regular
+    # and non-regular grid, unlike their name suggests.
     if grid_type in GRID_TYPES_DIMENSION_COORDS
-        Lonlat
+        RegularGrid
     elseif grid_type in GRID_TYPES_2D_NON_DIMENSION_COORDS
-        NonDimensionCoords
+        NonRegularGrid
     else
-        NoCoords
+        OtherGrid
     end
 end
 
 function _alldims(index::FileIndex)
-    dims = vcat(_horizdim(index, _horizontaltype(index))..., _verticaldims(index)..., _otherdims(index)...)
+    dims = vcat(_horizdims(index, _horizontal_gridtype(index))..., _verticaldims(index)..., _otherdims(index)...)
     NTuple{length(dims), AbstractDim}(dims)
 end
 
@@ -140,16 +144,16 @@ function _build_verticaldims(index)
     return dims
 end
 
-function _horizdim(index::FileIndex, ::Type{Lonlat})
-    Tuple(MessageDimension{Horizontal}.(["lon", "lat"], ["longitude", "latitude"],[getone(index, "Nx"), getone(index, "Ny")]))
+function _horizdims(index::FileIndex, ::Type{RegularGrid})
+    Tuple(MessageDimension{RegularGrid}.(["lon", "lat"], ["longitude", "latitude"],[getone(index, "Nx"), getone(index, "Ny")]))
 end
 
-function _horizdim(index::FileIndex, ::Type{NonDimensionCoords})
-    Tuple(MessageDimension{Horizontal}.(["x", "y"], ["x", "y"],[getone(index, "Nx"), getone(index, "Ny")]))
+function _horizdims(index::FileIndex, ::Type{NonRegularGrid})
+    Tuple(MessageDimension{NonRegularGrid}.(["x", "y"], ["x", "y"],[getone(index, "Nx"), getone(index, "Ny")]))
 end
 
-function _horizdim(index::FileIndex, ::Type{NoCoords})
-    Tuple(MessageDimension{Other}("values", "values",getone(index, "numberOfPoints")))
+function _horizdims(index::FileIndex, ::Type{OtherGrid})
+    Tuple([MessageDimension{Other}("values", "values", getone(index, "numberOfPoints"))])
 end
 
 function _dim_values(index::FileIndex, dim::MessageDimension{<:NonHorizontal})
@@ -167,7 +171,7 @@ function _dim_values(index::FileIndex, dim::MessageDimension{<:NonHorizontal})
     identity.(vals)
 end
 
-function _dim_values(index::FileIndex, dim::MessageDimension{Horizontal})
+function _dim_values(index::FileIndex, dim::Union{MessageDimension{RegularGrid}, MessageDimension{NonRegularGrid}})
     if dimgribname(dim) == "longitude"
         index._first_data[1][:, 1]
     elseif dimgribname(dim) == "latitude"
@@ -179,9 +183,13 @@ function _dim_values(index::FileIndex, dim::MessageDimension{Horizontal})
     end
 end
 
+_dim_values(index::FileIndex, dim::MessageDimension{Other}) = _dim_values(dim)
+
 _dim_values(::FileIndex, dim::Union{<:ArtificialDimension, <:IndexedDimension}) = _dim_values(dim)
 _dim_values(dim::Union{<:ArtificialDimension, <:IndexedDimension}) = identity.(dim.values)
+_dim_values(dim::MessageDimension{Other}) = nothing
 
+_is_coordinates(index::FileIndex, dim::AbstractDim) = isnothing(_dim_values(index, dim))
 # _map_dimname(dimname) = get(GRIB_KEY_TO_DIMNAMES_MAP, dimname, dimname)
 _map_dimname(dimname) = dimname
 

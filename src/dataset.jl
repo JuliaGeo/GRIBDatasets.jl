@@ -85,7 +85,12 @@ Base.getindex(ds::Dataset, key) = cfvariable(ds, string(key))
 getlayersid(ds::GRIBDataset) = ds.index["paramId"]
 getlayersname(ds::GRIBDataset) = string.(ds.index["cfVarName"])
 
-getvars(ds::GRIBDataset) = vcat(keys(ds.dims), getlayersname(ds))
+function getvars(ds::GRIBDataset) 
+    dimension_vars = keys(filter(x -> !_is_coordinates(ds.index, x), ds.dims))
+    layers_vars = getlayersname(ds)
+
+    vcat(dimension_vars, layers_vars)
+end
 
 _dim_values(ds::GRIBDataset, dim) = _dim_values(ds.index, dim)
 _get_dim(ds::GRIBDataset, key) = _get_dim(ds.dims, key)
