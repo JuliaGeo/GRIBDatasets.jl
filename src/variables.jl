@@ -134,6 +134,17 @@ function Variable(ds::GRIBDataset, key)
         Variable(ds, dim)
     elseif key in getlayersname(ds)
         layer_index = filter_messages(ds.index, cfVarName = key)
+        
+        levels = [mind["typeOfLevel"] for mind in layer_index.messages]
+
+        if length(unique(levels)) !== 1
+            error("""
+            The variable `$key` is defined on multiple types of vertical levels. This is not supported by GRIBDatasets.
+            To overcome this issue, you can try to filter the GRIB file on some specific level. Example:
+            ds = GRIBDataset("$(path(ds))", filter_by_values=Dict("typeOfLevel" => "$(levels[1])"))
+            """)
+        end
+
         dims = _alldims(layer_index)
 
         # A little bit tricky... If the variable is related to an artificial dimension,
@@ -160,7 +171,7 @@ function Variable(ds::GRIBDataset, key)
 
         Variable(ds, key, _filter_horizontal_dims(ds.dims), values, coordinate_attributes(key))
     else
-        error("key $key not found in dataset")
+        error("The key `$key` was been found in the dataset. Available keys: $(keys(ds))")
     end
 end
 
