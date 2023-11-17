@@ -58,14 +58,14 @@ Base.size(dv::DiskValues) = (_size_dims(dv.message_dims)..., _size_dims(dv.other
 # we have to threat them separately from the other dimensions (typically time, number, vertical...). This is
 # what makes this code quite complicated. There's probably a clever/prettier way of doing this, but this one works for now...
 function DA.readblock!(A::DiskValues, aout, i::AbstractUnitRange...)
+    @show i
     general_index = A.ds.index
     grib_path = general_index.grib_path
 
     message_dim_inds = i[1:length(A.message_dims)]
     headers_dim_inds = i[length(A.message_dims) + 1: end]
     
-    all_message_lengths = get_messages_length(A.ds.index)
-    all_message_cumsum = cumsum(all_message_lengths)
+    all_messages_offset = general_index._all_offsets
     missing_value = getone(general_index, "missingValue")
 
     rebased_range = Tuple([1:length(range) for range in headers_dim_inds])
@@ -75,7 +75,7 @@ function DA.readblock!(A::DiskValues, aout, i::AbstractUnitRange...)
     # GribFile(grib_path) do file
         for (I, Ir) in zip(CartesianIndices(headers_dim_inds), CartesianIndices(rebased_range))
             offset = A.offsets[I]
-            message_index = findfirst(all_message_cumsum .> offset)
+            message_index = findfirst(all_messages_offset .>= offset)
             if isnothing(message_index)
                 error("Couldn't find a message that corresponds to indices $(Tuple(I))")
             end

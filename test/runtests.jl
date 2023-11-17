@@ -1,7 +1,7 @@
 using GRIBDatasets
 using Test
 
-GDS = GRIBDatasets
+const GDS = GRIBDatasets
 
 const dir_tests = abspath(joinpath(dirname(pathof(GRIBDatasets)), "..", "test"))
 const dir_testfiles = abspath(joinpath(dir_tests, "sample-data"))

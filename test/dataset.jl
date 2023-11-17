@@ -161,6 +161,16 @@ using GRIBDatasets: CDM
 
         @test lambert["latitude"][:] == lambert.index._first_data[2][:]
     end
+
+    @testset "filter dataset by values" begin
+        fds = GRIBDataset(grib_path; filter_by_values = Dict("cfVarName" => "t"))
+
+        @test !haskey(fds, "z")
+
+        @test all(fds["t"].var.values.offsets .== ds["t"].var.values.offsets)
+        @test all(ds["t"][:,:,2, 3, 2] .== fds["t"][:,:,2, 3, 2])
+        @test all(ds["t"][:,:,2, 3:4, 2] .== fds["t"][:,:,2, 3:4, 2])
+    end
 end
 
 @testset "test all files" begin
