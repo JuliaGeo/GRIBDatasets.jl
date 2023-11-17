@@ -58,7 +58,6 @@ Base.size(dv::DiskValues) = (_size_dims(dv.message_dims)..., _size_dims(dv.other
 # we have to threat them separately from the other dimensions (typically time, number, vertical...). This is
 # what makes this code quite complicated. There's probably a clever/prettier way of doing this, but this one works for now...
 function DA.readblock!(A::DiskValues, aout, i::AbstractUnitRange...)
-    @show i
     general_index = A.ds.index
     grib_path = general_index.grib_path
 
