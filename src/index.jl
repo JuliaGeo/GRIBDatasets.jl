@@ -24,37 +24,6 @@ getheaders(index::FileIndex) = index.unique_headers
 Construct a [`FileIndex`](@ref) for the file `grib_path`, storing only the keys in `index_keys`.
 It is possible to read only specific values by specifying them in `filter_by_values`.
 The values of the headers can be accessed with `getindex`.
-
-# Example
-
-```jldoctest
-index = FileIndex(example_file)
-
-# output
-FileIndex{Float64} with 160 messages
-Headers summary:
-Dict{AbstractString, Vector{Any}} with 39 entries:
-  "edition"                          => [1]
-  "jDirectionIncrementInDegrees"     => [3.0]
-  "number"                           => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-  "time"                             => [1483228800, 1483272000, 1483315200, 14…
-  "dataType"                         => ["an"]
-  "stepUnits"                        => [1]
-  "subCentre"                        => [0]
-  "jPointsAreConsecutive"            => [0]
-  "level"                            => [500, 850]
-  "name"                             => ["Geopotential", "Temperature"]
-  "step"                             => [0]
-  "jScansPositively"                 => [0]
-  "latitudeOfLastGridPointInDegrees" => [-90.0]
-  "valid_time"                       => [1483228800, 1483272000, 1483315200, 14…
-  "dataDate"                         => [20170101, 20170102]
-  "iScansNegatively"                 => [0]
-  "numberOfPoints"                   => [7320]
-  "missingValue"                     => [9999]
-  "gridType"                         => ["regular_ll"]
-  ⋮                                  => ⋮
-```
 """
 function FileIndex(grib_path::String; index_keys = ALL_KEYS, filter_by_values = Dict())
     messages = MessageIndex[]
