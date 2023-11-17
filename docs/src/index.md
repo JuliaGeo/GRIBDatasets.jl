@@ -4,4 +4,4 @@ CurrentModule = GRIBDatasets
 
 # GRIBDatasets
 
-Documentation for [GRIBDatasets](https://github.com/tcarion/GRIBDatasets.jl).
+Documentation for [GRIBDatasets](https://github.com/JuliaGeo/GRIBDatasets.jl).
