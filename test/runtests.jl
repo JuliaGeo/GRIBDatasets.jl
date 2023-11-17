@@ -1,7 +1,7 @@
 using GRIBDatasets
 using Test
 
-GDS = GRIBDatasets
+const GDS = GRIBDatasets
 
 const dir_tests = abspath(joinpath(dirname(pathof(GRIBDatasets)), "..", "test"))
 const dir_testfiles = abspath(joinpath(dir_tests, "sample-data"))
@@ -21,6 +21,7 @@ test_files = joinpath.(dir_testfiles, [
     "regular_ll_wrong_increment.grib", # OK
     "scanning_mode_64.grib", # OK
     "t_analysis_and_fc_0.grib", # OK
+    "reduced_gg.grib", # OK
 ])
 
 @testset "GRIBDatasets.jl" begin

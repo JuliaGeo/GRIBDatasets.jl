@@ -64,8 +64,7 @@ function DA.readblock!(A::DiskValues, aout, i::AbstractUnitRange...)
     message_dim_inds = i[1:length(A.message_dims)]
     headers_dim_inds = i[length(A.message_dims) + 1: end]
     
-    all_message_lengths = get_messages_length(A.ds.index)
-    all_message_cumsum = cumsum(all_message_lengths)
+    all_messages_offset = general_index._all_offsets
     missing_value = getone(general_index, "missingValue")
 
     rebased_range = Tuple([1:length(range) for range in headers_dim_inds])
@@ -75,7 +74,7 @@ function DA.readblock!(A::DiskValues, aout, i::AbstractUnitRange...)
     # GribFile(grib_path) do file
         for (I, Ir) in zip(CartesianIndices(headers_dim_inds), CartesianIndices(rebased_range))
             offset = A.offsets[I]
-            message_index = findfirst(all_message_cumsum .> offset)
+            message_index = findfirst(all_messages_offset .>= offset)
             if isnothing(message_index)
                 error("Couldn't find a message that corresponds to indices $(Tuple(I))")
             end
@@ -134,6 +133,18 @@ function Variable(ds::GRIBDataset, key)
         Variable(ds, dim)
     elseif key in getlayersname(ds)
         layer_index = filter_messages(ds.index, cfVarName = key)
+        
+        levels = [mind["typeOfLevel"] for mind in layer_index.messages]
+        unique_levels = unique(levels)
+        if length(unique_levels) !== 1
+            examples = ["GRIBDataset(\"$(path(ds))\", filter_by_values=Dict(\"typeOfLevel\" => \"$(level)\"))\n" for level in unique_levels]
+            error("""
+            The variable `$key` is defined on multiple types of vertical levels. This is not supported by GRIBDatasets.
+            To overcome this issue, you can try to filter the GRIB file on some specific level. In your case, try to re-open the dataset with one of:
+            $(join(examples))
+            """)
+        end
+
         dims = _alldims(layer_index)
 
         # A little bit tricky... If the variable is related to an artificial dimension,
@@ -155,14 +166,18 @@ function Variable(ds::GRIBDataset, key)
         dv = DiskValues(ds, layer_index, dims)
         attributes = layer_attributes(layer_index)
         Variable(ds, string(key), dims, dv, attributes)
+    elseif key in additional_coordinates_varnames(ds.dims)
+        values = key == "longitude" ? ds.index._first_data[1] : ds.index._first_data[2]
+
+        Variable(ds, key, _filter_horizontal_dims(ds.dims), values, coordinate_attributes(key))
     else
-        error("key $key not found in dataset")
+        error("The key `$key` was been found in the dataset. Available keys: $(keys(ds))")
     end
 end
 
 function Variable(ds::GRIBDataset, dim::AbstractDim) 
     vals = _dim_values(ds, dim)
-    attributes = dim_attributes(dim)
+    attributes = coordinate_attributes(dim)
     Variable(ds, dim.name, (dim,), vals, attributes)
 end
 
@@ -182,11 +197,13 @@ function layer_attributes(index::FileIndex)
     attributes
 end
 
-function dim_attributes(dim)
+function coordinate_attributes(key)
     attributes = Dict{String, Any}()
-    merge!(attributes, copy(get(COORD_ATTRS, dimgribname(dim), Dict())))
+    merge!(attributes, copy(get(COORD_ATTRS, key, Dict())))
     attributes
 end
+
+coordinate_attributes(dim::AbstractDim) = coordinate_attributes(dimgribname(dim))
 
 # Shifts the responsibility of showing the variable in the REPL to CommonDataModel
 Base.show(io::IO, mime::MIME"text/plain", var::AbstractGRIBVariable) = show(io, var)

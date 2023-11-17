@@ -134,6 +134,43 @@ using GRIBDatasets: CDM
     @testset "time dimension" begin
         @test ds["valid_time"][1] isa DateTime
     end
+
+    @testset "reduced gaussian grid" begin
+        reduced_gg_path = joinpath(dir_testfiles, "reduced_gg.grib")
+
+        dsrgg = GRIBDataset(reduced_gg_path)
+
+        @test haskey(dsrgg, "longitude")
+        @test haskey(dsrgg, "latitude")
+
+        @test dsrgg["latitude"] isa AbstractVector
+        @test size(dsrgg["longitude"]) == (GDS.dimlength(dsrgg.dims[1]), )
+        @test dsrgg["longitude"][1:3] == [0.,18.,36.]
+        @test dsrgg["latitude"][:] == dsrgg.index._first_data[2][:]
+    end
+
+    @testset "lamber grid" begin
+        lambert_path = joinpath(dir_testfiles, "lambert_grid.grib")
+        lambert = GRIBDataset(lambert_path)
+
+        @test haskey(lambert, "longitude")
+        @test haskey(lambert, "latitude")
+
+        @test lambert["latitude"] isa AbstractMatrix
+        @test lambert["longitude"] isa AbstractMatrix
+
+        @test lambert["latitude"][:] == lambert.index._first_data[2][:]
+    end
+
+    @testset "filter dataset by values" begin
+        fds = GRIBDataset(grib_path; filter_by_values = Dict("cfVarName" => "t"))
+
+        @test !haskey(fds, "z")
+
+        @test all(fds["t"].var.values.offsets .== ds["t"].var.values.offsets)
+        @test all(ds["t"][:,:,2, 3, 2] .== fds["t"][:,:,2, 3, 2])
+        @test all(ds["t"][:,:,2, 3:4, 2] .== fds["t"][:,:,2, 3:4, 2])
+    end
 end
 
 @testset "test all files" begin

@@ -12,6 +12,9 @@ struct FileIndex{T}
     unique_headers::Dict{AbstractString, Vector{Any}}
     "We keep the data of the first message to avoid re-reading for getting x-y coordinates"
     _first_data
+
+    "We need to keep the offsets of all the messages of the file for further seeking."
+    _all_offsets::Vector{Int}
 end
 getheaders(index::FileIndex) = index.unique_headers
 
@@ -21,37 +24,6 @@ getheaders(index::FileIndex) = index.unique_headers
 Construct a [`FileIndex`](@ref) for the file `grib_path`, storing only the keys in `index_keys`.
 It is possible to read only specific values by specifying them in `filter_by_values`.
 The values of the headers can be accessed with `getindex`.
-
-# Example
-
-```jldoctest
-index = FileIndex(example_file)
-
-# output
-FileIndex{Float64} with 160 messages
-Headers summary:
-Dict{AbstractString, Vector{Any}} with 39 entries:
-  "edition"                          => [1]
-  "jDirectionIncrementInDegrees"     => [3.0]
-  "number"                           => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-  "time"                             => [1483228800, 1483272000, 1483315200, 14…
-  "dataType"                         => ["an"]
-  "stepUnits"                        => [1]
-  "subCentre"                        => [0]
-  "jPointsAreConsecutive"            => [0]
-  "level"                            => [500, 850]
-  "name"                             => ["Geopotential", "Temperature"]
-  "step"                             => [0]
-  "jScansPositively"                 => [0]
-  "latitudeOfLastGridPointInDegrees" => [-90.0]
-  "valid_time"                       => [1483228800, 1483272000, 1483315200, 14…
-  "dataDate"                         => [20170101, 20170102]
-  "iScansNegatively"                 => [0]
-  "numberOfPoints"                   => [7320]
-  "missingValue"                     => [9999]
-  "gridType"                         => ["regular_ll"]
-  ⋮                                  => ⋮
-```
 """
 function FileIndex(grib_path::String; index_keys = ALL_KEYS, filter_by_values = Dict())
     messages = MessageIndex[]
@@ -84,7 +56,17 @@ function FileIndex(grib_path::String; index_keys = ALL_KEYS, filter_by_values = 
     finally
         destroy(f)
     end
-    FileIndex{datatype}(grib_path, messages, unique_headers, fdata)
+
+    # This is quite inconvenient and unefficient, since we have to go trough all the file
+    # even when we want to filter the file. But I couldn't see a better way. It would be
+    # nice to be able to seek through the GRIB files with knowing the offset of the message!
+    _all_offsets = if isempty(filter_by_values)
+        get_offsets(messages)
+    else
+        get_offsets(grib_path)
+    end
+
+    FileIndex{datatype}(grib_path, messages, unique_headers, fdata, _all_offsets)
 end
 
 function Base.show(io::IO, mime::MIME"text/plain", index::FileIndex) 
@@ -92,6 +74,18 @@ function Base.show(io::IO, mime::MIME"text/plain", index::FileIndex)
     println(io, "Headers summary:")
     show(io, mime, getheaders(index))
 end
+
+function get_offsets(grib_path::AbstractString)
+    offsets = Int64[]
+    GribFile(grib_path) do f
+        for m in f
+            push!(offsets, m["offset"])
+        end
+    end
+    return offsets
+end
+
+get_offsets(index::FileIndex) = get_offsets(index.messages)
 
 getmessages(index::FileIndex) = index.messages
 Base.getindex(index::FileIndex, key::String) = getheaders(index)[key]
@@ -135,7 +129,7 @@ length(filtered)
 function filter_messages(index::FileIndex{T}, args...; kwargs...) where T
     mindexs = filter_messages(getmessages(index), args...; kwargs...)
     unique_headers = build_unique_headers(mindexs)
-    FileIndex{T}(index.grib_path, mindexs, unique_headers, index._first_data)
+    FileIndex{T}(index.grib_path, mindexs, unique_headers, index._first_data, index._all_offsets)
 end
 
 function with_messages(f::Function, index::FileIndex, args...; kwargs...) 
