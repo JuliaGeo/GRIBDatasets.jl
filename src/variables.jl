@@ -136,12 +136,13 @@ function Variable(ds::GRIBDataset, key)
         layer_index = filter_messages(ds.index, cfVarName = key)
         
         levels = [mind["typeOfLevel"] for mind in layer_index.messages]
-
-        if length(unique(levels)) !== 1
+        unique_levels = unique(levels)
+        if length(unique_levels) !== 1
+            examples = ["GRIBDataset(\"$(path(ds))\", filter_by_values=Dict(\"typeOfLevel\" => \"$(level)\"))\n" for level in unique_levels]
             error("""
             The variable `$key` is defined on multiple types of vertical levels. This is not supported by GRIBDatasets.
-            To overcome this issue, you can try to filter the GRIB file on some specific level. Example:
-            ds = GRIBDataset("$(path(ds))", filter_by_values=Dict("typeOfLevel" => "$(levels[1])"))
+            To overcome this issue, you can try to filter the GRIB file on some specific level. In your case, try to re-open the dataset with one of:
+            $(join(examples))
             """)
         end
 
