@@ -1,6 +1,6 @@
 
 _get_dim(cfvar::CFVariable, dimname) = _get_dim(cfvar.var, dimname)
-function cfvariable(ds, varname)
+function cfvariable(ds, varname; maskingvalue = maskingvalue(ds))
     v = Variable(ds, string(varname))
     misval = missing_value(v)
     CDM.cfvariable(
@@ -8,6 +8,7 @@ function cfvariable(ds, varname)
         _v = v,
         missing_value = isnothing(misval) ? eltype(v)[] : [misval],
         attrib = cflayer_attributes(v),
+        maskingvalue = maskingvalue,
     )
 end
 

@@ -8,19 +8,21 @@ It can be created with the path to the GRIB file:
 ds = GRIBDataset(example_file);
 ```
 """
-struct GRIBDataset{T, N} <: AbstractDataset
+struct GRIBDataset{T, N, Tmaskingvalue} <: AbstractDataset
     index::FileIndex{T}
     dims::NTuple{N, AbstractDim}
     attrib::Dict{String, Any}
+    maskingvalue::Tmaskingvalue
 end
 
 const Dataset = GRIBDataset
 
-function GRIBDataset(index::FileIndex)
-    GRIBDataset(index, _alldims(index), dataset_attributes(index)) 
+function GRIBDataset(index::FileIndex; maskingvalue = missing)
+    GRIBDataset(index, _alldims(index), dataset_attributes(index), maskingvalue)
 end
 
-GRIBDataset(filepath::AbstractString; filter_by_values = Dict()) = GRIBDataset(FileIndex(filepath; filter_by_values))
+GRIBDataset(filepath::AbstractString; filter_by_values = Dict(), kwargs...) =
+    GRIBDataset(FileIndex(filepath; filter_by_values); kwargs...)
 
 Base.keys(ds::Dataset) = getvars(ds)
 Base.haskey(ds::Dataset, key) = key in keys(ds)
@@ -46,6 +48,7 @@ dimnames(ds::GRIBDataset) = keys(ds.dims)
 
 attribnames(ds::GRIBDataset) = keys(ds.attrib)
 attrib(ds::GRIBDataset, attribname::String) = ds.attrib[attribname]
+maskingvalue(ds::GRIBDataset) = ds.maskingvalue
 
 # _dim_values(ds::GRIBDataset, dim::Dimension{Horizontal}) = _dim_values(ds.index, dim)
 

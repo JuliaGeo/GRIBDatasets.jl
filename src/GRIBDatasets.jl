@@ -5,7 +5,8 @@ using GRIB
 using DataStructures
 import DiskArrays as DA
 using CommonDataModel: AbstractDataset, AbstractVariable, show_dim, CFVariable
-import CommonDataModel: path, name, dimnames, isopen, attribnames, attrib, dataset
+import CommonDataModel: path, name, dimnames, isopen, attribnames, attrib,
+    dataset, maskingvalue
 import CommonDataModel as CDM
 
 const DEFAULT_EPOCH = DateTime(1970, 1, 1, 0, 0)
