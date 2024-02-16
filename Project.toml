@@ -11,7 +11,7 @@ DiskArrays = "3c3547ce-8d99-4f5e-a174-61eb10b00ae3"
 GRIB = "b16dfd50-4035-11e9-28d4-9dfe17e6779b"
 
 [compat]
-CommonDataModel = "^0.2.1, 0.3"
+CommonDataModel = "0.3.4"
 DataStructures = "0.18"
 DiskArrays = "0.3"
 GRIB = "0.3, 0.4"

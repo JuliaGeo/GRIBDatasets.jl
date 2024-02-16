@@ -12,6 +12,7 @@ using GRIBDatasets: CDM
     grib_path = joinpath(dir_testfiles, "era5-levels-members.grib")
     ds = GRIBDataset(grib_path)
     dsmis = GRIBDataset(joinpath(dir_testfiles, "fields_with_missing_values.grib"))
+    dsNaN = GRIBDataset(joinpath(dir_testfiles, "fields_with_missing_values.grib"),maskingvalue = NaN)
     index = ds.index
 
     varstring = "z"
@@ -87,12 +88,25 @@ using GRIBDatasets: CDM
         @testset "cfvariable and missing" begin
             cfvar = cfvariable(ds, varstring)
             cfvarmis = cfvariable(dsmis, "t2m")
+            cfvarNaN = cfvariable(dsNaN, "t2m")
             A = cfvar[:,:,1,1,1]
             Amis = cfvarmis[:,:,1,1]
+            ANaN = cfvarNaN[:,:,1,1]
 
             # With CommonDataModel, we necessarily get a Union{Missing, Float64}, even if there's no missing.
             @test_broken eltype(A) == Float64
             @test eltype(Amis) == Union{Missing, Float64}
+            @test eltype(ANaN) == Float64
+
+            # test the use of a different maskingvalue per dataset
+            @test eltype(dsmis["t2m"]) == Union{Missing,Float64}
+            @test eltype(dsNaN["t2m"]) == Float64
+            @test ismissing(Amis[1,1,1])
+            @test isnan(ANaN[1,1,1])
+
+            # test the use of a different maskingvalue per variable
+            A2NaN = cfvariable(dsmis,"t2m", maskingvalue = NaN)
+            @test isnan(A2NaN[1,1,1])
         end
 
         @testset "cfvariable coordinate" begin
