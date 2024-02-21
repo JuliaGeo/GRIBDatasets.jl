@@ -24,10 +24,10 @@ const GRIB_STEP_UNITS_TO_SECONDS = [
 
 
 """
-    from_grib_date_time(date::Int, time::Int; epoch::DateTime=DEFAULT_EPOCH)
+    from_grib_date_time(date::Integer, time::Integer; epoch::DateTime=DEFAULT_EPOCH)
 Seconds from epoch to the given date and time.
 """
-function from_grib_date_time(date::Int, time::Int; epoch::DateTime=DEFAULT_EPOCH)::Int
+function from_grib_date_time(date::Integer, time::Integer; epoch::DateTime=DEFAULT_EPOCH)::Integer
     hour = time ÷ 100
     minute = time % 100
     year = date ÷ 10000

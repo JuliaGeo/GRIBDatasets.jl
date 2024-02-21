@@ -117,3 +117,6 @@ NCDatasets.write(netcdf_file,GRIBDataset(grib_file))
 ```
 ## Opening issues:
 GRIB format files may have a (very) large amount of different shapes. `GRIBDatasets` might not work for your specific edge case. If this happens, please open an issue, if possible providing the file triggering the bug.
+
+## Missing windows support
+This package currently doesn't work on Windows. See issue GRIB.jl for more information https://github.com/weech/GRIB.jl/issues/14
