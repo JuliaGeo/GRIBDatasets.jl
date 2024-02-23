@@ -113,7 +113,9 @@ using Downloads: download
 
 grib_file = download("https://github.com/JuliaGeo/GRIBDatasets.jl/raw/98356af026ea39a5ec0b5e64e4289105492321f8/test/sample-data/era5-levels-members.grib")
 netcdf_file = "test.nc"
-NCDatasets.write(netcdf_file,GRIBDataset(grib_file))
+NCDataset(netcdf_file,"c") do ds
+    write(ds,GRIBDataset(grib_file))
+end
 ```
 ## Opening issues:
 GRIB format files may have a (very) large amount of different shapes. `GRIBDatasets` might not work for your specific edge case. If this happens, please open an issue, if possible providing the file triggering the bug.
