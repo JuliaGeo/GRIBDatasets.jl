@@ -111,7 +111,7 @@ julia> GDS.build_valid_time([10], 10)
 (("time",), [36010])
 ```
 """
-function build_valid_time(time::Array{Integer,1}, step::Integer)::Tuple{Tuple{String},Array{Int64,1}}
+function build_valid_time(time::Array{<:Integer,1}, step::Integer)::Tuple{Tuple{String},Array{Int64,1}}
     step_s = step * 3600
 
     data = time .+ step_s
@@ -126,7 +126,7 @@ julia> GDS.build_valid_time(1, [10])
 (("step",), [36001])
 ```
 """
-function build_valid_time(time::Integer, step::Array{Integer,1})::Tuple{Tuple{String},Array{Int64,1}}
+function build_valid_time(time::Integer, step::Array{<:Integer,1})::Tuple{Tuple{String},Array{Int64,1}}
     step_s = step * 3600
 
     data = time .+ step_s
@@ -146,7 +146,7 @@ julia> GDS.build_valid_time([10], [10])
 ((), 36010)
 ```
 """
-function build_valid_time(time::Array{Integer,1}, step::Array{Integer,1})
+function build_valid_time(time::Array{<:Integer,1}, step::Array{<:Integer,1})
     step_s = step * 3600
 
     if length(time) == 1 && length(step) == 1
