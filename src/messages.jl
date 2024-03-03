@@ -24,10 +24,10 @@ const GRIB_STEP_UNITS_TO_SECONDS = [
 
 
 """
-    from_grib_date_time(date::Int, time::Int; epoch::DateTime=DEFAULT_EPOCH)
+    from_grib_date_time(date::Integer, time::Integer; epoch::DateTime=DEFAULT_EPOCH)
 Seconds from epoch to the given date and time.
 """
-function from_grib_date_time(date::Int, time::Int; epoch::DateTime=DEFAULT_EPOCH)::Int
+function from_grib_date_time(date::Integer, time::Integer; epoch::DateTime=DEFAULT_EPOCH)::Integer
     hour = time ÷ 100
     minute = time % 100
     year = date ÷ 10000
@@ -58,7 +58,7 @@ end
     from_grib_step(message::GRIB.Message, step_key::String="endStep", step_unit_key::String="stepUnits")
 Returns the `step_key` value in hours.
 """
-function from_grib_step(message::GRIB.Message, step_key::String="endStep", step_unit_key::String="stepUnits")::Float64
+function from_grib_step(message::GRIB.Message, step_key::AbstractString="endStep", step_unit_key::AbstractString="stepUnits")::Float64
     to_seconds = GRIB_STEP_UNITS_TO_SECONDS[message[step_unit_key] + 1]
     return message[step_key] * to_seconds / 3600.0
 end
@@ -72,7 +72,7 @@ end
 Returns the integer seconds from the epoch to the verifying month value in the
 GRIB message.
 """
-function from_grib_month(message::GRIB.Message, verifying_month_key::String="verifyingMonth", epoch::DateTime=DEFAULT_EPOCH)::Union{Int,Missing}
+function from_grib_month(message::GRIB.Message, verifying_month_key::AbstractString="verifyingMonth", epoch::DateTime=DEFAULT_EPOCH)::Union{Int,Missing}
     if !haskey(message, verifying_month_key)
         return missing
     end
@@ -96,7 +96,7 @@ julia> GDS.build_valid_time(10, 10)
 ((), 36010)
 ```
 """
-function build_valid_time(time::Int, step::Int)::Tuple{Tuple{},Int64}
+function build_valid_time(time::Integer, step::Integer)::Tuple{Tuple{},Int64}
     step_s = step * 3600
 
     data = time + step_s
@@ -111,7 +111,7 @@ julia> GDS.build_valid_time([10], 10)
 (("time",), [36010])
 ```
 """
-function build_valid_time(time::Array{Int,1}, step::Int)::Tuple{Tuple{String},Array{Int64,1}}
+function build_valid_time(time::Array{<:Integer,1}, step::Integer)::Tuple{Tuple{String},Array{Int64,1}}
     step_s = step * 3600
 
     data = time .+ step_s
@@ -126,7 +126,7 @@ julia> GDS.build_valid_time(1, [10])
 (("step",), [36001])
 ```
 """
-function build_valid_time(time::Int, step::Array{Int,1})::Tuple{Tuple{String},Array{Int64,1}}
+function build_valid_time(time::Integer, step::Array{<:Integer,1})::Tuple{Tuple{String},Array{Int64,1}}
     step_s = step * 3600
 
     data = time .+ step_s
@@ -146,7 +146,7 @@ julia> GDS.build_valid_time([10], [10])
 ((), 36010)
 ```
 """
-function build_valid_time(time::Array{Int,1}, step::Array{Int,1})
+function build_valid_time(time::Array{<:Integer,1}, step::Array{<:Integer,1})
     step_s = step * 3600
 
     if length(time) == 1 && length(step) == 1
@@ -215,7 +215,7 @@ Read a specific key from a GRIB.jl message. Attempts to convert the raw value
 associated with that key using the [`COMPUTED_KEYS`](@ref COMPUTED_KEYS) mapping
 to `from_grib_*` functions.
 """
-function read_message(message::GRIB.Message, key::String)
+function read_message(message::GRIB.Message, key::AbstractString)
     value = missing
 
     if key in keys(COMPUTED_KEYS)

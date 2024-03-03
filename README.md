@@ -119,3 +119,6 @@ end
 ```
 ## Opening issues:
 GRIB format files may have a (very) large amount of different shapes. `GRIBDatasets` might not work for your specific edge case. If this happens, please open an issue, if possible providing the file triggering the bug.
+
+## Windows support is experimental
+The windows support is still under development. Most test cases works on windows but a few still fail. See issue GRIB.jl for more information https://github.com/weech/GRIB.jl/issues/14
