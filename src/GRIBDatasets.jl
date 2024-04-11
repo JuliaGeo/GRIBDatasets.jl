@@ -20,6 +20,6 @@ include("dataset.jl")
 include("variables.jl")
 include("cfvariables.jl")
 
-export GRIBDataset, FileIndex
+export GRIBDataset, FileIndex, dimnames
 
 end
