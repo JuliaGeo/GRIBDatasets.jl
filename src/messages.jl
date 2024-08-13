@@ -259,7 +259,7 @@ mind["name"]
 """
 function MessageIndex(message::GRIB.Message; index_keys = ALL_KEYS)
     values = read_message.(Ref(message), index_keys)
-    headers = Dict(k => v for (k,v) in zip(index_keys, values))
+    headers = Dict{String,Any}(k => v for (k, v) in zip(index_keys, values))
     
     offset = Int(message["offset"])
     length = message["totalLength"]
@@ -280,12 +280,11 @@ function filter_messages(mindexs::Vector{<:MessageIndex}, k::AbstractString, v)
 end
 
 
-function filter_messages(mindexs::Vector{<:MessageIndex}; query...)
-    ms = deepcopy(mindexs)
+function filter_messages(ms::Vector{<:MessageIndex}; query...)
     for (k, v) in query
         ms = filter_messages(ms, string(k), v)
     end
-    ms
+    return ms
 end
 
 function filter_offsets(mindexs::Vector{<:MessageIndex}, key, val)

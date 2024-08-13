@@ -1,5 +1,6 @@
 using GRIBDatasets
 using Dates
+using DiskArrays
 using Test
 using GRIBDatasets: getone
 using GRIBDatasets: Variable
@@ -28,6 +29,16 @@ using GRIBDatasets: CDM
         @test CDM.dataset(var) == ds
 
         @test CDM.name(ds[:t]) == CDM.name(ds["t"])
+    end
+
+    @testset "DiskArrays on Variable" begin
+        var = ds[:z].var
+        size(var)
+        @test DiskArrays.eachchunk(var) == DiskArrays.eachchunk(parent(var))
+        @test DiskArrays.haschunks(var) == DiskArrays.haschunks(parent(var))
+        block = zeros(10, 10, 1, 1, 1)
+        DiskArrays.readblock!(var, block, 1:10, 1:10, 1:1, 1:1, 1:1) 
+        @test all(block .== var[1:10, 1:10, 1, 1, 1])
     end
 
     @testset "dataset indexing" begin
