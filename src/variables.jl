@@ -157,9 +157,7 @@ function Variable(ds::GRIBDataset, key)
 
         for d in dims
             if !_is_length_consistent(d, dsdims)
-                @warn "The length of dimension $(dimname(d)) in variable $key is different
-                from the corresponding dimension in the dataset. This could lead to unexpected
-                behaviour."
+                @warn "The length of dimension $(dimname(d)) in variable $key is different from the corresponding dimension in the dataset. This could lead to unexpected behaviour."
             end
         end
 
@@ -171,7 +169,7 @@ function Variable(ds::GRIBDataset, key)
 
         Variable(ds, key, _filter_horizontal_dims(ds.dims), values, coordinate_attributes(key))
     else
-        error("The key `$key` was been found in the dataset. Available keys: $(keys(ds))")
+        error("The key `$key` was not found in the dataset. Available keys: $(keys(ds))")
     end
 end
 
