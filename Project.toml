@@ -15,7 +15,7 @@ eccodes_jll = "b04048ba-5ccd-5610-b3f6-85129a548705"
 CommonDataModel = "0.3.4"
 DataStructures = "0.18"
 DiskArrays = "0.3, 0.4"
-eccodes_jll = "2.28"
+eccodes_jll = "~2.28"
 GRIB = "0.3, 0.4"
 julia = "1"
 
