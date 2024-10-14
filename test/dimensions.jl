@@ -79,7 +79,7 @@ using Test
 
         @test keys(vertdims) == ["hybrid", "heightAboveGround", "heightAboveGround_2"]
 
-        u10 = filter_messages(index, cfVarName = "u10")
+        u10 = filter_messages(index, cfVarName = "avg_10u")
         indices = messages_indices(u10, _alldims(u10))
 
         @test indices[1] == [1, 1]

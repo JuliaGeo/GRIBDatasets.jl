@@ -122,9 +122,9 @@ using GRIBDatasets: CDM
         u = ds2["u"]
         @test u[:,:, 1, 1] isa AbstractArray{<:Any, 2}
         @test_throws BoundsError u[:,:,1,2]
-        u10 = ds2["u10"]
+        u10 = ds2["avg_10u"]
         @test GDS._dim_values(GDS._get_dim(u10, "heightAboveGround_2")) == [10]
-        t2m = ds2["t2m"]
+        t2m = ds2["mean2t"]
         @test GDS._dim_values(GDS._get_dim(t2m, "heightAboveGround")) == [2]
     end
 
