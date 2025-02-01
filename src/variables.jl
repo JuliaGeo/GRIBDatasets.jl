@@ -91,7 +91,7 @@ function DA.readblock!(A::DiskValues, aout, i::AbstractUnitRange...)
 end
 
 DA.eachchunk(A::DiskValues) = DA.GridChunks(A, size(A))
-DA.haschunks(A::DiskValues) = DA.Unchunked()
+DA.haschunks(A::DiskValues) = DA.Chunked() # Its basically one large chunk
 
 """
     Variable <: AbstractArray
@@ -130,8 +130,10 @@ DA.@implement_diskarray Variable
 Base.getindex(var::Variable{T,N,Array{T,N}}, I...) where {T,N} = 
     getindex(parent(var), I...)
 
-DA.readblock!(A::Variable, aout, i::AbstractUnitRange...) =
+function DA.readblock!(A::Variable, aout, i::AbstractUnitRange...)
+    @show i
     DA.readblock!(parent(A), aout, i...)
+end
 DA.eachchunk(A::Variable) = DA.eachchunk(parent(A))
 DA.haschunks(A::Variable) = DA.haschunks(parent(A))
 
