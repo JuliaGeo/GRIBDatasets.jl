@@ -199,10 +199,9 @@ end
 
 end
 
-# @testset "diskarrays" begin
+@testset "diskarrays" begin
     # No scalar indexing allowed
     DiskArrays.allow_scalar(false)
-    grib_path = joinpath(dir_testfiles, "era5-levels-members.grib")
     ds = GRIBDataset(grib_path)
     # CFVariable is not a disk array, so will be super slow here.
     # But the underlying variable is
@@ -213,7 +212,7 @@ end
     # Broadcasts are lazy
     B = var .* 10
     @test B isa DiskArrays.BroadcastDiskArray
-    @test b[1:50, 1:50, 1, 1, 1] isa Matrix
+    @test B[1:50, 1:50, 1, 1, 1] isa Matrix
     # Reduction is chunked
     @test sum(var) * 10 == sum(B) 
 end

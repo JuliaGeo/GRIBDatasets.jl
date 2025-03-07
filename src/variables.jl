@@ -131,7 +131,6 @@ Base.getindex(var::Variable{T,N,Array{T,N}}, I...) where {T,N} =
     getindex(parent(var), I...)
 
 function DA.readblock!(A::Variable, aout, i::AbstractUnitRange...)
-    @show i
     DA.readblock!(parent(A), aout, i...)
 end
 DA.eachchunk(A::Variable) = DA.eachchunk(parent(A))
