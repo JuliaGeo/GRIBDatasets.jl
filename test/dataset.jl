@@ -201,7 +201,7 @@ end
 
 @testset "diskarrays" begin
     # No scalar indexing allowed
-    DiskArrays.allow_scalar(false)
+    DiskArrays.allowscalar(false)
     ds = GRIBDataset(grib_path)
     # CFVariable is not a disk array, so will be super slow here.
     # But the underlying variable is
