@@ -1,7 +1,7 @@
 name = "GRIBDatasets"
 uuid = "82be9cdb-ee19-4151-bdb3-b400788d9abc"
 authors = ["tcarion <tristan.carion@gmail.com> and contributors"]
-version = "0.4.0"
+version = "0.4.1"
 
 [deps]
 CommonDataModel = "1fbeeb36-5f17-413c-809b-666fb144f157"
