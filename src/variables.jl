@@ -2,6 +2,7 @@ abstract type AbstractGRIBVariable{T, N} <: AbstractVariable{T, N} end
 
 """
     DiskValues{T, N, M} <: DA.AbstractDiskArray{T, N}
+
 Object that maps the dimensions lookup to GRIB messages offsets.
 `message_dims` are the dimensions that are found in the GRIB message (namely longitudes and latitudes).
 `other_dims` are the dimensions that have been infered from reading the GRIB file index.
@@ -90,7 +91,7 @@ function DA.readblock!(A::DiskValues, aout, i::AbstractUnitRange...)
 end
 
 DA.eachchunk(A::DiskValues) = DA.GridChunks(A, size(A))
-DA.haschunks(A::DiskValues) = DA.Unchunked()
+DA.haschunks(A::DiskValues) = DA.Chunked() # Its basically one large chunk
 
 """
     Variable <: AbstractArray
@@ -105,7 +106,6 @@ struct Variable{T, N, TA <: Union{Array{T, N}, DA.AbstractDiskArray{T, N}}, TP} 
 end
 Base.parent(var::Variable) = var.values
 Base.size(var::Variable) = _size_dims(var.dims)  
-Base.getindex(var::Variable, I...) = getindex(parent(var), I...)
 
 ndims(::AbstractGRIBVariable{T,N}) where {T,N} = N
 varname(var::Variable) = var.name
@@ -124,6 +124,19 @@ attrib(var::AbstractGRIBVariable, attribname::String) = var.attrib[attribname]
 dataset(var::AbstractGRIBVariable) = var.ds
 
 _get_dim(var::Variable, key::String) = _get_dim(var.dims, key)
+
+DA.@implement_diskarray Variable
+# Avoid DiskArrays.jl indexing when the parent is an Array
+Base.getindex(var::Variable{T,N,Array{T,N}}, I::AbstractUnitRange...) where {T,N} = 
+    getindex(parent(var), I...)
+Base.getindex(var::Variable{T,N,Array{T,N}}, I...) where {T,N} = 
+    getindex(parent(var), I...)
+
+function DA.readblock!(A::Variable, aout, i::AbstractUnitRange...)
+    DA.readblock!(parent(A), aout, i...)
+end
+DA.eachchunk(A::Variable) = DA.eachchunk(parent(A))
+DA.haschunks(A::Variable) = DA.haschunks(parent(A))
 
 function Variable(ds::GRIBDataset, key)
     dsdims = ds.dims

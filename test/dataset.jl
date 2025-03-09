@@ -7,15 +7,17 @@ using GRIBDatasets: DATA_ATTRIBUTES_KEYS, GRID_TYPE_MAP
 using GRIBDatasets: _to_datetime
 using GRIBDatasets: DiskValues, Variable, CFVariable, cfvariable
 using GRIBDatasets: CDM
+using DiskArrays
+
+grib_path = joinpath(dir_testfiles, "era5-levels-members.grib")
+varstring = "z"
 
 @testset "dataset and variables" begin
-    grib_path = joinpath(dir_testfiles, "era5-levels-members.grib")
     ds = GRIBDataset(grib_path)
     dsmis = GRIBDataset(joinpath(dir_testfiles, "fields_with_missing_values.grib"))
     dsNaN = GRIBDataset(joinpath(dir_testfiles, "fields_with_missing_values.grib"),maskingvalue = NaN)
     index = ds.index
 
-    varstring = "z"
     @testset "CommonDataModel implementation" begin
         @test CDM.dim(ds, "number") == 10
         @test length(CDM.dimnames(ds)) == 5
@@ -195,4 +197,22 @@ end
         @time ds = GRIBDataset(testfile)
     end
 
+end
+
+@testset "diskarrays" begin
+    # No scalar indexing allowed
+    DiskArrays.allowscalar(false)
+    ds = GRIBDataset(grib_path)
+    # CFVariable is not a disk array, so will be super slow here.
+    # But the underlying variable is
+    var = ds[varstring].var
+    @test DiskArrays.isdisk(var)
+    # Currently just one huge chunk
+    @test length(DiskArrays.eachchunk(var)) == 1
+    # Broadcasts are lazy
+    B = var .* 10
+    @test B isa DiskArrays.BroadcastDiskArray
+    @test B[1:50, 1:50, 1, 1, 1] isa Matrix
+    # Reduction is chunked
+    @test sum(var) * 10 == sum(B) 
 end
