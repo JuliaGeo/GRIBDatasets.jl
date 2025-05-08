@@ -133,7 +133,11 @@ Base.getindex(var::Variable{T,N,Array{T,N}}, I...) where {T,N} =
     getindex(parent(var), I...)
 
 function DA.readblock!(A::Variable, aout, i::AbstractUnitRange...)
-    DA.readblock!(parent(A), aout, i...)
+    if parent(A) isa Array # in this case it's not really a diskarray
+        aout .= parent(A)[i...]
+    else 
+        DA.readblock!(parent(A), aout, i...)
+    end
 end
 DA.eachchunk(A::Variable) = DA.eachchunk(parent(A))
 DA.haschunks(A::Variable) = DA.haschunks(parent(A))
