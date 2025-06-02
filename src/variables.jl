@@ -107,6 +107,11 @@ end
 Base.parent(var::Variable) = var.values
 Base.size(var::Variable) = _size_dims(var.dims)  
 
+DA.eachchunk(A::Variable) = DA.eachchunk(parent(A))
+DA.haschunks(A::Variable) = DA.haschunks(parent(A))
+DA.readblock!(A::Variable, aout, i::AbstractUnitRange...) =
+    DA.readblock!(parent(A), aout, i...)
+
 ndims(::AbstractGRIBVariable{T,N}) where {T,N} = N
 varname(var::Variable) = var.name
 dims(var::Variable) = var.dims
