@@ -125,7 +125,6 @@ dataset(var::AbstractGRIBVariable) = var.ds
 
 _get_dim(var::Variable, key::String) = _get_dim(var.dims, key)
 
-DA.@implement_diskarray Variable
 # Avoid DiskArrays.jl indexing when the parent is an Array
 Base.getindex(var::Variable{T,N,Array{T,N}}, I::AbstractUnitRange...) where {T,N} = 
     getindex(parent(var), I...)
