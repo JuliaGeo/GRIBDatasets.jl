@@ -153,7 +153,7 @@ function build_valid_time(time::Array{<:Integer,1}, step::Array{<:Integer,1})
         return build_valid_time(time[1], step[1])
     end
 
-    data = time' .+ step_s
+    data = step_s .+ time
     dims = ("time", "step")
     return dims, data
 end

@@ -1,8 +1,8 @@
 const IGNORED_COORDS = [
-    "time",
+    # The valid_time coordinate need to be re-constructed from the "time" and "step" coordinates
+    "valid_time",
     "verifying_time",
     "indexing_time",
-    "step"
 ]
 
 const GLOBAL_ATTRIBUTES_KEYS = [
