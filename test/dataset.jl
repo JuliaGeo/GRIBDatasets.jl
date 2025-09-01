@@ -204,6 +204,10 @@ end
     withsteps = GRIBDataset(joinpath(dir_testfiles, "regular_ll_msl_with_steps.grib"))
     @test size(withsteps["valid_time"]) == (length(withsteps["time"]), length(withsteps["step"]))
     @test size(withsteps["msl"][:,:,:,:]) == (3,3,62,4)
+    @test eltype(withsteps["valid_time"]) <: Dates.DateTime
+    @test eltype(withsteps["time"]) <: Dates.DateTime
+    @test eltype(withsteps["valid_time"].var) <: Int
+    @test eltype(withsteps["time"].var) <: Int
 end
 
 @testset "diskarrays" begin
