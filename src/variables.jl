@@ -188,7 +188,7 @@ function Variable(ds::GRIBDataset, key)
             Variable(ds, key, _filter_horizontal_dims(ds.dims), values, coordinate_attributes(key))
         elseif key == "valid_time"
             dimnames, coordvalues = build_valid_time(ds.index)
-            Variable(ds, "valid_time", Tuple(ds.dims[n] for n in dimnames), coordvalues, coordinate_attributes("valid_time"))
+            Variable(ds, "valid_time", Tuple(ds.dims[n] for n in dimnames), coordvalues, coordinate_attributes(key))
         end
     else
         error("The key `$key` was not found in the dataset. Available keys: $(keys(ds))")

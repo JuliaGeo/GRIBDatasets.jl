@@ -199,6 +199,13 @@ end
 
 end
 
+@testset "tests on specific grib files" begin
+    # issue 41
+    withsteps = GRIBDataset(joinpath(dir_testfiles, "regular_ll_msl_with_steps.grib"))
+    @test size(withsteps["valid_time"]) == (length(withsteps["time"]), length(withsteps["step"]))
+    @test size(withsteps["msl"][:,:,:,:]) == (3,3,62,4)
+end
+
 @testset "diskarrays" begin
     # No scalar indexing allowed
     DiskArrays.allowscalar(false)
