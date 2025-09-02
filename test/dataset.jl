@@ -2,11 +2,11 @@ using GRIBDatasets
 using Dates
 using Test
 using GRIBDatasets: getone
-using GRIBDatasets: Variable
 using GRIBDatasets: DATA_ATTRIBUTES_KEYS, GRID_TYPE_MAP
 using GRIBDatasets: _to_datetime
 using GRIBDatasets: DiskValues, Variable, CFVariable, cfvariable
 using GRIBDatasets: CDM
+using GRIBDatasets: getlayersname
 using DiskArrays
 
 grib_path = joinpath(dir_testfiles, "era5-levels-members.grib")
@@ -34,8 +34,8 @@ varstring = "z"
 
     @testset "dataset indexing" begin
         vars = keys(ds)
-        @test vars[1] == "lon"
-        @test GDS.getlayersname(ds)[1] == "z"
+        @test vars == ["lon", "lat", "isobaricInhPa", "number", "time", "z", "t", "valid_time"]
+        @test getlayersname(ds) == ["z", "t"]
         @test length(ds.dims) == 5
         @test ds.attrib["centre"] == getone(index, "centre")
     end
