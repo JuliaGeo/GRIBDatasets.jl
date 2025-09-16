@@ -1,7 +1,7 @@
 name = "GRIBDatasets"
 uuid = "82be9cdb-ee19-4151-bdb3-b400788d9abc"
 authors = ["tcarion <tristan.carion@gmail.com> and contributors"]
-version = "0.4.1"
+version = "0.4.2"
 
 [deps]
 CommonDataModel = "1fbeeb36-5f17-413c-809b-666fb144f157"
@@ -12,7 +12,7 @@ GRIB = "b16dfd50-4035-11e9-28d4-9dfe17e6779b"
 eccodes_jll = "b04048ba-5ccd-5610-b3f6-85129a548705"
 
 [compat]
-CommonDataModel = "0.3.4"
+CommonDataModel = "0.4"
 DataStructures = "0.18"
 DiskArrays = "0.3, 0.4"
 eccodes_jll = "~2.36"
