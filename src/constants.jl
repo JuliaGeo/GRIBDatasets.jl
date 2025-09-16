@@ -1,8 +1,8 @@
 const IGNORED_COORDS = [
-    "time",
+    # The valid_time coordinate need to be re-constructed from the "time" and "step" coordinates
+    "valid_time",
     "verifying_time",
     "indexing_time",
-    "step"
 ]
 
 const GLOBAL_ATTRIBUTES_KEYS = [
@@ -260,7 +260,7 @@ const CF_MAP_ATTRIBUTES = Dict(
     "units" => "units"
 )
 
-const KEYS_TO_SQUEEZE = ["number"]
+const KEYS_TO_SQUEEZE = ["number", "step"]
 # """
 #     GRIB_KEY_TO_DIMNAMES_MAP
 # Maps the GRIB keys to the name the variable will have in the GRIBDataset.

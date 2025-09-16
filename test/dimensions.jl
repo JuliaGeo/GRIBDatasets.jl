@@ -51,8 +51,8 @@ using Test
     
     @test isnothing(_dim_values(reduced_gg, _alldims(reduced_gg)[1]))
 
-    @test additional_coordinates_varnames(lam_alldims) == ["longitude", "latitude"]
-    @test additional_coordinates_varnames(era_alldims) == []
+    @test additional_coordinates_varnames(lam_alldims) == ["longitude", "latitude", "valid_time"]
+    @test additional_coordinates_varnames(era_alldims) == ["valid_time"]
 
     # first dimensions must be the horizontal ones
     @test keys(era_alldims)[1:2] == ["lon", "lat"]
