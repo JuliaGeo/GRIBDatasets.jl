@@ -212,14 +212,16 @@ _filter_horizontal_dims(dims::Dimensions) = Tuple(x for x in dims if x isa Messa
     additional_coordinates_varnames(dims::Dimensions)
 In case of irregular grids, eccodes might provide the longitude and latitude. If so, this will
 then be stored as additionnal variables.
+Additionnally the "valid_time" coordinates is reconstructed from the "time" and "step" dimensions.
 """
 function additional_coordinates_varnames(dims::Dimensions)::Vector{<:AbstractString}
     dimtypes = _dimtype.(dims)
+    additonal_coords = String[]
     if any(x -> x == NonRegularGrid || x == OtherGrid, dimtypes)
-        return ["longitude", "latitude"]
-    else
-        return String[]
+        push!(additonal_coords, ["longitude", "latitude"]...)
     end
+    push!(additonal_coords, "valid_time")
+    return additonal_coords
 end
 # _map_dimname(dimname) = get(GRIB_KEY_TO_DIMNAMES_MAP, dimname, dimname)
 _map_dimname(dimname) = dimname
