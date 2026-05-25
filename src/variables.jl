@@ -181,9 +181,14 @@ function Variable(ds::GRIBDataset, key)
         attributes = layer_attributes(layer_index)
         Variable(ds, string(key), dims, dv, attributes)
     elseif key in additional_coordinates_varnames(ds.dims)
-        values = key == "longitude" ? ds.index._first_data[1] : ds.index._first_data[2]
+        if key in ["longitude", "latitude"]
+            values = key == "longitude" ? ds.index._first_data[1] : ds.index._first_data[2]
 
-        Variable(ds, key, _filter_horizontal_dims(ds.dims), values, coordinate_attributes(key))
+            Variable(ds, key, _filter_horizontal_dims(ds.dims), values, coordinate_attributes(key))
+        elseif key == "valid_time"
+            dimnames, coordvalues = build_valid_time(ds.index)
+            Variable(ds, "valid_time", Tuple(ds.dims[n] for n in dimnames), coordvalues, coordinate_attributes(key))
+        end
     else
         error("The key `$key` was not found in the dataset. Available keys: $(keys(ds))")
     end

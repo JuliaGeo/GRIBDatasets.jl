@@ -35,7 +35,7 @@ function getvars(ds::GRIBDataset)
     dimension_vars = keys(filter(x -> _has_coordinates(ds.index, x), ds.dims))
     layers_vars = getlayersname(ds)
     coordinates_vars = additional_coordinates_varnames(ds.dims)
-    vcat(dimension_vars, coordinates_vars, layers_vars)
+    vcat(dimension_vars, layers_vars, coordinates_vars)
 end
 
 _dim_values(ds::GRIBDataset, dim) = _dim_values(ds.index, dim)

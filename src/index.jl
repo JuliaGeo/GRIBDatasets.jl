@@ -109,7 +109,9 @@ end
 missing_value(index::FileIndex) = getone(index, "missingValue")
 
 function build_valid_time(index::FileIndex)
-    build_valid_time(identity.(index["valid_time"]), identity.(index["step"]))
+    times = identity.(index["time"])
+    steps = identity.(index["step"])
+    build_valid_time(length(times) == 1 ? times[1] : times, length(steps) == 1 ? steps[1] : steps)
 end
 
 """
